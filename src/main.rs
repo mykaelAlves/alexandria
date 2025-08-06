@@ -10,8 +10,6 @@ struct AppGlobalState;
 impl AppGlobalState {
     fn setup() {
         info(SERVER_STARTED);
-
-        dotenvy::dotenv().ok();
     }
 }
 
