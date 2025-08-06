@@ -1,29 +1,21 @@
 use std::error::Error;
 
 use alexandria::{
-    log::{debug, info, warn},
-    responses::{SERVER_CLOSED, SERVER_STARTED},
+    log::err,
+    responses::FAILED_CREATE_SERVER,
+    run::ServerApp,
 };
-
-struct AppGlobalState;
-
-impl AppGlobalState {
-    fn setup() {
-        info(SERVER_STARTED);
-    }
-}
-
-impl Drop for AppGlobalState {
-    fn drop(&mut self) {
-        warn(SERVER_CLOSED);
-    }
-}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let state = AppGlobalState::setup();
+    let mut server = match ServerApp::new() {
+        Ok(st) => st,
+        Err(e) => return err(FAILED_CREATE_SERVER, e),
+    };
 
-    println!("Hello, world!");
+    server.run().await?;
+
+    server.shutdown().await;
 
     Ok(())
 }
