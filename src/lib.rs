@@ -1,5 +1,5 @@
 pub mod models;
-pub mod services;
+pub mod handlers;
 
 pub mod log {
     use chrono::prelude::*;
@@ -74,7 +74,7 @@ pub mod responses {
 
 pub mod run {
     use crate::{log::err, responses::SERVER_RUNNING};
-    use crate::services;
+    use crate::handlers;
     use axum::Router;
     use axum::routing::any;
     use serde::Deserialize;
@@ -170,7 +170,7 @@ pub mod run {
 
         pub async fn run(&self) -> Result<(), Box<dyn Error>> {
             let app: Router =
-                axum::Router::new().route("/", any(services::root));
+                axum::Router::new().route("/", any(handlers::root));
 
             let listener = match TcpListener::bind(self.get_ipv4()).await {
                 Ok(l) => l,
@@ -197,8 +197,6 @@ pub mod run {
 
     impl Drop for ServerApp {
         fn drop(&mut self) {
-            std::fs::create_dir("aaaaa").unwrap();
-
             if self.is_running {
                 warn(SERVER_CLOSED_WRONGLY);
             }
