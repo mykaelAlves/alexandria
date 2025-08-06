@@ -1,0 +1,22 @@
+Config(
+    network: (
+        ip: ([127, 0, 0, 1], 9999),
+    ),
+    
+    database: (
+        url: "postgresql://user:password@host:port/db_name",
+
+        pool: (
+            max_connections: 20,
+            connect_timeout_seconds: 5,
+        ),
+    ),
+
+    logging_path: "my/path/to/file.log",
+
+    auth: (
+        jwt_secret: "secret",
+        jwt_expiration_in_min: 30,
+        jwt_issuer: "alexandria-api"
+    ),
+)
