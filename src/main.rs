@@ -14,7 +14,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     server.run().await?;
-
     server.shutdown().await;
 
     Ok(())

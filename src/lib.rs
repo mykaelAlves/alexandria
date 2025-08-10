@@ -52,7 +52,7 @@ pub mod config {
     use std::sync::{LazyLock, Mutex};
 
     pub const CONFIG_PATH: &str = "config/config.ron";
-    pub const DEFAULT_LOGGING_PATH: &str = "server.log";
+    const DEFAULT_LOGGING_PATH: &str = "server.log";
     pub static LOGGING_PATH: LazyLock<Mutex<String>> =
         LazyLock::new(|| Mutex::new(String::from(DEFAULT_LOGGING_PATH)));
 }
