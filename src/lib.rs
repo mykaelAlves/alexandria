@@ -201,6 +201,14 @@ pub mod run {
         pub fn get_ipv4(&self) -> SocketAddrV4 {
             self.config.network.ip
         }
+
+        pub fn get_database_url(&self) -> String {
+            self.config.database.url.clone()
+        }
+
+        pub fn get_max_connections(&self) -> u8 {
+            self.config.database.pool.max_connections
+        }
     }
 
     pub struct ServerGuard;

@@ -4,7 +4,7 @@ use crate::models::intern;
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Cargo {
-    id_cargo: i64,
+    id_cargo: i32,
     titulo: String,
     data_criacao: DateTime<Utc>,
 }
@@ -23,14 +23,26 @@ impl PartialEq for Cargo {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Motivo {
-    id_motivo: i64,
+    id_motivo: i32,
     nome: String,
     data_criacao: DateTime<Utc>,
 }
 
+impl Motivo {
+    pub fn to_intern(&self) -> intern::Motivo {
+        intern::Motivo::new(&self.nome)
+    }
+}
+
+impl PartialEq for Motivo {
+    fn eq(&self, other: &Self) -> bool {
+        self.id_motivo == other.id_motivo
+    }
+}
+
 #[derive(sqlx::FromRow, Debug)]
 pub struct Diretorio {
-    id_diretorio: i64,
+    id_diretorio: i32,
     caminho: String,
     modificavel: bool,
     data_criacao: DateTime<Utc>,
@@ -39,7 +51,7 @@ pub struct Diretorio {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Endereco {
-    id_endereco: i64,
+    id_endereco: i32,
     cep: String,
     logradouro: String,
     numero: String,
@@ -54,9 +66,9 @@ pub struct Endereco {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Funcionario {
-    id_funcionario: i64,
+    id_funcionario: i32,
     nome: String,
-    id_cargo: i64,
+    id_cargo: i32,
     email: Option<String>,
     num_telefone: Option<String>,
     username: String,
@@ -69,7 +81,7 @@ pub struct Funcionario {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Procurador {
-    id_procurador: i64,
+    id_procurador: i32,
     nome: String,
     cpf: String,
     oab: String,
@@ -81,7 +93,7 @@ pub struct Procurador {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Reclamado {
-    id_reclamado: i64,
+    id_reclamado: i32,
     tipo_pessoa: char,
     nome: Option<String>,
     razao_social: Option<String>,
@@ -90,19 +102,19 @@ pub struct Reclamado {
     cnpj: Option<String>,
     email: Option<String>,
     num_telefone: Option<String>,
-    id_endereco: i64,
+    id_endereco: i32,
     data_criacao: DateTime<Utc>,
     data_modificacao: DateTime<Utc>,
 }
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Reclamacao {
-    id_reclamacao: i64,
-    id_procurador: i64,
-    id_reclamado: i64,
-    id_motivo: i64,
-    id_diretorio: i64,
-    id_cargo: i64,
+    id_reclamacao: i32,
+    id_procurador: i32,
+    id_reclamado: i32,
+    id_motivo: i32,
+    id_diretorio: i32,
+    id_cargo: i32,
     status: StatusReclamacao,
     assunto: String,
     descricao: Option<String>,
@@ -128,8 +140,8 @@ pub enum StatusReclamacao {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct Audiencia {
-    id_audiencia: i64,
-    id_conciliador: i64,
+    id_audiencia: i32,
+    id_conciliador: i32,
     data: DateTime<Utc>,
     meio: MeioAudiencia,
     data_criacao: DateTime<Utc>,
@@ -138,7 +150,7 @@ pub struct Audiencia {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct HistoricoStatusReclamacao {
-    id_reclamacao: i64,
+    id_reclamacao: i32,
     status_old: StatusReclamacao,
     status_new: StatusReclamacao,
     data_mudanca: DateTime<Utc>,
@@ -146,6 +158,6 @@ pub struct HistoricoStatusReclamacao {
 
 #[derive(sqlx::FromRow, Debug)]
 pub struct RelacaoReclamacaoAudiencia {
-    id_reclamacao: i64,
-    id_audiencia: i64,
+    id_reclamacao: i32,
+    id_audiencia: i32,
 }
