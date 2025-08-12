@@ -1,5 +1,6 @@
-pub mod models;
 pub mod handlers;
+pub mod models;
+pub mod services;
 
 pub mod log {
     use chrono::prelude::*;
@@ -51,6 +52,10 @@ pub mod log {
 pub mod config {
     use std::sync::{LazyLock, Mutex};
 
+    use crate::run::ServerApp;
+
+    pub static SERVER_APP: LazyLock<ServerApp> =
+        LazyLock::new(|| ServerApp::new().unwrap());
     pub const CONFIG_PATH: &str = "config/config.ron";
     const DEFAULT_LOGGING_PATH: &str = "server.log";
     pub static LOGGING_PATH: LazyLock<Mutex<String>> =
@@ -73,11 +78,13 @@ pub mod responses {
 }
 
 pub mod run {
-    use crate::{log::err, responses::SERVER_RUNNING};
+    use crate::config::SERVER_APP;
     use crate::handlers;
+    use crate::{log::err, responses::SERVER_RUNNING};
     use axum::Router;
     use axum::routing::any;
     use serde::Deserialize;
+    use std::sync::atomic::AtomicBool;
     use std::{error::Error, net::SocketAddrV4};
     use tokio::net::TcpListener;
 
@@ -149,7 +156,7 @@ pub mod run {
     }
 
     pub struct ServerApp {
-        is_running: bool,
+        is_running: AtomicBool,
         state: GlobalState,
         config: Config,
     }
@@ -162,7 +169,7 @@ pub mod run {
             let state = GlobalState::new()?;
 
             Ok(Self {
-                is_running: true,
+                is_running: AtomicBool::new(true),
                 state,
                 config,
             })
@@ -184,10 +191,11 @@ pub mod run {
             Ok(())
         }
 
-        pub async fn shutdown(&mut self) {
+        pub async fn shutdown(&self) {
             warn(SERVER_CLOSED);
 
-            self.is_running = false;
+            self.is_running
+                .store(false, std::sync::atomic::Ordering::SeqCst);
         }
 
         pub fn get_ipv4(&self) -> SocketAddrV4 {
@@ -195,13 +203,20 @@ pub mod run {
         }
     }
 
-    impl Drop for ServerApp {
+    pub struct ServerGuard;
+
+    impl Drop for ServerGuard {
         fn drop(&mut self) {
-            if self.is_running {
+            if SERVER_APP
+                .is_running
+                .load(std::sync::atomic::Ordering::SeqCst)
+            {
                 warn(SERVER_CLOSED_WRONGLY);
             }
 
-            self.is_running = false;
+            SERVER_APP
+                .is_running
+                .store(false, std::sync::atomic::Ordering::SeqCst);
         }
     }
 }

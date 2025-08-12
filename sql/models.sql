@@ -7,7 +7,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TYPE meio_audiencia_enum AS ENUM ('Remoto', 'Hibrido', 'Presencial');
-CREATE TYPE status_reclamacao_enum AS ENUM ('Em tramitação', 'Arquivado', 'Desarquivado');
+CREATE TYPE status_reclamacao_enum AS ENUM ('EmTramitacao', 'Arquivado', 'Desarquivado');
 
 CREATE TABLE Cargo (
   id_cargo INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,

@@ -1,20 +1,18 @@
 use std::error::Error;
 
 use alexandria::{
+    config::SERVER_APP,
     log::err,
     responses::FAILED_CREATE_SERVER,
-    run::ServerApp,
+    run::{ServerApp, ServerGuard},
 };
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let mut server = match ServerApp::new() {
-        Ok(st) => st,
-        Err(e) => return err(FAILED_CREATE_SERVER, e),
-    };
+    let _guard = ServerGuard;
 
-    server.run().await?;
-    server.shutdown().await;
+    SERVER_APP.run().await?;
+    SERVER_APP.shutdown().await;
 
     Ok(())
 }
