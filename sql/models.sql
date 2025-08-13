@@ -1,3 +1,7 @@
+-- =============================================================================
+-- SEÇÃO 1: FUNÇÕES DE TRIGGER
+-- =============================================================================
+
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -6,22 +10,57 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION trigger_registrar_mudanca_status()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.status IS DISTINCT FROM NEW.status THEN
+    INSERT INTO historico_status_reclamacoes (id_reclamacao, status_anterior, status_novo)
+    VALUES (OLD.id_reclamacao, OLD.status, NEW.status);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+-- =============================================================================
+-- SEÇÃO 2: TIPOS PERSONALIZADOS (ENUMs e DOMAINs)
+-- =============================================================================
+
 CREATE TYPE meio_audiencia_enum AS ENUM ('Remoto', 'Hibrido', 'Presencial');
 CREATE TYPE status_reclamacao_enum AS ENUM ('EmTramitacao', 'Arquivado', 'Desarquivado');
+CREATE TYPE uf_enum AS ENUM (
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
+  'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
+  'SP', 'SE', 'TO'
+);
 
-CREATE TABLE Cargo (
+CREATE DOMAIN d_cpf AS VARCHAR(11)
+  CHECK (VALUE ~ '^[0-9]{11}$' AND VALUE IS NOT NULL);
+
+CREATE DOMAIN d_cnpj AS VARCHAR(14)
+  CHECK (VALUE ~ '^[0-9]{14}$' AND VALUE IS NOT NULL);
+
+CREATE DOMAIN d_email AS VARCHAR(255)
+  CHECK (VALUE ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+
+
+-- =============================================================================
+-- SEÇÃO 3: CRIAÇÃO DAS TABELAS
+-- =============================================================================
+
+CREATE TABLE cargos (
   id_cargo INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   titulo VARCHAR(100) NOT NULL UNIQUE,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE Motivo (
+CREATE TABLE motivos (
   id_motivo INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   nome VARCHAR(255) NOT NULL UNIQUE,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE Diretorio (
+CREATE TABLE diretorios (
   id_diretorio INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   caminho VARCHAR(255) NOT NULL UNIQUE,
   modificavel BOOLEAN NOT NULL DEFAULT TRUE,
@@ -29,35 +68,25 @@ CREATE TABLE Diretorio (
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TRIGGER set_timestamp_diretorio
-BEFORE UPDATE ON Diretorio
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE Endereco (
+CREATE TABLE enderecos (
   id_endereco INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  cep VARCHAR(10) NOT NULL,
+  cep VARCHAR(8) NOT NULL CHECK (cep ~ '^[0-9]{8}$'),
   logradouro VARCHAR(255) NOT NULL,
   numero VARCHAR(20) NOT NULL,
   complemento VARCHAR(100) NULL,
   bairro VARCHAR(100) NOT NULL,
   cidade VARCHAR(100) NOT NULL,
-  estado VARCHAR(50) NOT NULL,
+  estado uf_enum NOT NULL,
   pais VARCHAR(50) NOT NULL DEFAULT 'Brasil',
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TRIGGER set_timestamp_endereco
-BEFORE UPDATE ON Endereco
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE Funcionario (
+CREATE TABLE funcionarios (
   id_funcionario INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   nome VARCHAR(255) NOT NULL,
-  id_cargo INT NOT NULL REFERENCES Cargo(id_cargo) ON DELETE RESTRICT ON UPDATE CASCADE,
-  email VARCHAR(255) NULL UNIQUE,
+  id_cargo INT NOT NULL REFERENCES cargos(id_cargo) ON DELETE RESTRICT ON UPDATE CASCADE,
+  email d_email NULL UNIQUE,
   num_telefone VARCHAR(20) NULL,
   username VARCHAR(100) NOT NULL UNIQUE,
   pwd_hash VARCHAR(255) NOT NULL,
@@ -67,58 +96,43 @@ CREATE TABLE Funcionario (
   data_desligamento TIMESTAMPTZ NULL
 );
 
-CREATE TRIGGER set_timestamp_funcionario
-BEFORE UPDATE ON Funcionario
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE Procurador (
+CREATE TABLE procuradores (
   id_procurador INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   nome VARCHAR(255) NOT NULL,
-  cpf VARCHAR(11) NOT NULL UNIQUE,
+  cpf d_cpf NOT NULL UNIQUE,
   oab VARCHAR(20) NOT NULL UNIQUE,
-  email VARCHAR(255) NULL,
+  email d_email NULL,
   num_telefone VARCHAR(20) NULL,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TRIGGER set_timestamp_procurador
-BEFORE UPDATE ON Procurador
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE Reclamante (
+CREATE TABLE reclamantes (
   id_reclamante INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   tipo_pessoa CHAR(1) NOT NULL,
   nome VARCHAR(255) NOT NULL,
-  cpf VARCHAR(11) NULL UNIQUE,
-  cnpj VARCHAR(14) NULL UNIQUE,
+  cpf d_cpf NULL UNIQUE,
+  cnpj d_cnpj NULL UNIQUE,
   rg VARCHAR(20) NULL UNIQUE,
-  id_endereco INT NOT NULL REFERENCES Endereco(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
+  id_endereco INT NOT NULL REFERENCES enderecos(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_reclamante_tipo_pessoa
-    CHECK ((tipo_pessoa = 'F' AND cpf IS NOT NULL AND cnpj IS NULL) OR 
+    CHECK ((tipo_pessoa = 'F' AND cpf IS NOT NULL AND cnpj IS NULL) OR
            (tipo_pessoa = 'J' AND cnpj IS NOT NULL AND cpf IS NULL))
 );
 
-CREATE TRIGGER set_timestamp_reclamante
-BEFORE UPDATE ON Reclamante
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE Reclamado (
+CREATE TABLE reclamados (
   id_reclamado INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   tipo_pessoa CHAR(1) NOT NULL,
   nome VARCHAR(255) NULL,
   razao_social VARCHAR(255) NULL,
   nome_fantasia VARCHAR(255) NULL,
-  cpf VARCHAR(11) NULL UNIQUE,
-  cnpj VARCHAR(14) NULL UNIQUE,
-  email VARCHAR(255) NULL,
+  cpf d_cpf NULL UNIQUE,
+  cnpj d_cnpj NULL UNIQUE,
+  email d_email NULL,
   num_telefone VARCHAR(20) NULL,
-  id_endereco INT NOT NULL REFERENCES Endereco(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
+  id_endereco INT NOT NULL REFERENCES enderecos(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_reclamado_tipo_pessoa
@@ -126,63 +140,117 @@ CREATE TABLE Reclamado (
            (tipo_pessoa = 'J' AND cnpj IS NOT NULL AND razao_social IS NOT NULL AND cpf IS NULL AND nome IS NULL))
 );
 
-CREATE TRIGGER set_timestamp_reclamado
-BEFORE UPDATE ON Reclamado
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE Audiencia (
+CREATE TABLE audiencias (
   id_audiencia INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  id_conciliador INT NOT NULL REFERENCES Funcionario(id_funcionario) ON DELETE RESTRICT ON UPDATE CASCADE,
+  id_conciliador INT NOT NULL REFERENCES funcionarios(id_funcionario) ON DELETE RESTRICT ON UPDATE CASCADE,
   data TIMESTAMPTZ NOT NULL,
   meio meio_audiencia_enum NULL,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TRIGGER set_timestamp_audiencia
-BEFORE UPDATE ON Audiencia
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE Reclamacao (
+CREATE TABLE reclamacoes (
   id_reclamacao INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   numero INT NOT NULL,
   ano INT NOT NULL,
-  id_reclamante INT NOT NULL REFERENCES Reclamante(id_reclamante) ON DELETE RESTRICT ON UPDATE CASCADE,
-  id_motivo INT NOT NULL REFERENCES Motivo(id_motivo) ON DELETE RESTRICT ON UPDATE CASCADE,
-  id_procurador INT NULL REFERENCES Procurador(id_procurador) ON DELETE SET NULL ON UPDATE CASCADE,
+  protocolo VARCHAR(20) GENERATED ALWAYS AS (numero || '/' || ano) STORED,
+  id_reclamante INT NOT NULL REFERENCES reclamantes(id_reclamante) ON DELETE RESTRICT ON UPDATE CASCADE,
+  id_motivo INT NOT NULL REFERENCES motivos(id_motivo) ON DELETE RESTRICT ON UPDATE CASCADE,
+  id_procurador INT NULL REFERENCES procuradores(id_procurador) ON DELETE SET NULL ON UPDATE CASCADE,
   observacao TEXT NULL,
   atendido BOOLEAN NULL,
-  id_criador INT NOT NULL REFERENCES Funcionario(id_funcionario) ON DELETE RESTRICT ON UPDATE CASCADE,
+  id_criador INT NOT NULL REFERENCES funcionarios(id_funcionario) ON DELETE RESTRICT ON UPDATE CASCADE,
   status status_reclamacao_enum NOT NULL,
-  id_diretorio INT NOT NULL REFERENCES Diretorio(id_diretorio) ON DELETE RESTRICT ON UPDATE CASCADE,
+  id_diretorio INT NOT NULL REFERENCES diretorios(id_diretorio) ON DELETE RESTRICT ON UPDATE CASCADE,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (numero, ano)
 );
 
-CREATE TRIGGER set_timestamp_reclamacao
-BEFORE UPDATE ON Reclamacao
-FOR EACH ROW
-EXECUTE FUNCTION trigger_set_timestamp();
-
-CREATE TABLE HistoricoStatusReclamacao (
-  id_reclamacao INT NOT NULL REFERENCES Reclamacao(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
-  status_old status_reclamacao_enum NOT NULL,
-  status_new status_reclamacao_enum NOT NULL,
-  data_mudanca TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (id_reclamacao, data_mudanca)
+CREATE TABLE historico_status_reclamacoes (
+  id_historico BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  id_reclamacao INT NOT NULL REFERENCES reclamacoes(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
+  status_anterior status_reclamacao_enum NOT NULL,
+  status_novo status_reclamacao_enum NOT NULL,
+  data_mudanca TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE RelacaoReclamacaoReclamado (
-  id_reclamacao INT NOT NULL REFERENCES Reclamacao(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
-  id_reclamado INT NOT NULL REFERENCES Reclamado(id_reclamado) ON DELETE CASCADE ON UPDATE CASCADE,
+CREATE TABLE relacao_reclamacao_reclamado (
+  id_reclamacao INT NOT NULL REFERENCES reclamacoes(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
+  id_reclamado INT NOT NULL REFERENCES reclamados(id_reclamado) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY (id_reclamacao, id_reclamado)
 );
 
-CREATE TABLE RelacaoReclamacaoAudiencia (
-  id_reclamacao INT NOT NULL REFERENCES Reclamacao(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
-  id_audiencia INT NOT NULL REFERENCES Audiencia(id_audiencia) ON DELETE CASCADE ON UPDATE CASCADE,
+CREATE TABLE relacao_reclamacao_audiencia (
+  id_reclamacao INT NOT NULL REFERENCES reclamacoes(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
+  id_audiencia INT NOT NULL REFERENCES audiencias(id_audiencia) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY (id_reclamacao, id_audiencia)
 );
+
+
+-- =============================================================================
+-- SEÇÃO 4: CRIAÇÃO DOS TRIGGERS
+-- =============================================================================
+
+CREATE TRIGGER set_timestamp_diretorios BEFORE UPDATE ON diretorios FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_enderecos BEFORE UPDATE ON enderecos FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_funcionarios BEFORE UPDATE ON funcionarios FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_procuradores BEFORE UPDATE ON procuradores FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_reclamantes BEFORE UPDATE ON reclamantes FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_reclamados BEFORE UPDATE ON reclamados FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_audiencias BEFORE UPDATE ON audiencias FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_reclamacoes BEFORE UPDATE ON reclamacoes FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER registrar_mudanca_status AFTER UPDATE ON reclamacoes FOR EACH ROW WHEN (OLD.status IS DISTINCT FROM NEW.status) EXECUTE FUNCTION trigger_registrar_mudanca_status();
+
+
+-- =============================================================================
+-- SEÇÃO 5: CRIAÇÃO DOS ÍNDICES
+-- =============================================================================
+
+CREATE INDEX idx_funcionarios_id_cargo ON funcionarios(id_cargo);
+CREATE INDEX idx_reclamantes_id_endereco ON reclamantes(id_endereco);
+CREATE INDEX idx_reclamados_id_endereco ON reclamados(id_endereco);
+CREATE INDEX idx_audiencias_id_conciliador ON audiencias(id_conciliador);
+CREATE INDEX idx_reclamacoes_id_reclamante ON reclamacoes(id_reclamante);
+CREATE INDEX idx_reclamacoes_id_motivo ON reclamacoes(id_motivo);
+CREATE INDEX idx_reclamacoes_id_procurador ON reclamacoes(id_procurador);
+CREATE INDEX idx_reclamacoes_id_criador ON reclamacoes(id_criador);
+CREATE INDEX idx_reclamacoes_id_diretorio ON reclamacoes(id_diretorio);
+CREATE INDEX idx_reclamacoes_status ON reclamacoes(status);
+CREATE INDEX idx_historico_id_reclamacao ON historico_status_reclamacoes(id_reclamacao);
+CREATE INDEX idx_rel_reclamado_id_reclamado ON relacao_reclamacao_reclamado(id_reclamado);
+CREATE INDEX idx_rel_audiencia_id_audiencia ON relacao_reclamacao_audiencia(id_audiencia);
+
+
+-- =============================================================================
+-- SEÇÃO 6: DOCUMENTAÇÃO (COMMENTS)
+-- =============================================================================
+
+COMMENT ON FUNCTION trigger_set_timestamp IS 'Atualiza a coluna data_modificacao para a data e hora atuais sempre que uma linha é atualizada.';
+COMMENT ON FUNCTION trigger_registrar_mudanca_status IS 'Registra a mudança de status de uma reclamação na tabela de histórico.';
+
+COMMENT ON DOMAIN d_cpf IS 'Domínio para armazenar CPF, garantindo que contenha 11 dígitos numéricos.';
+COMMENT ON DOMAIN d_cnpj IS 'Domínio para armazenar CNPJ, garantindo que contenha 14 dígitos numéricos.';
+COMMENT ON DOMAIN d_email IS 'Domínio para validar e armazenar endereços de e-mail.';
+
+COMMENT ON TABLE cargos IS 'Armazena os diferentes cargos que um funcionário pode ocupar.';
+COMMENT ON TABLE motivos IS 'Catálogo de motivos que podem originar uma reclamação.';
+COMMENT ON TABLE diretorios IS 'Armazena caminhos de diretórios no sistema de arquivos para associar a reclamações.';
+COMMENT ON TABLE enderecos IS 'Armazena informações de endereço para reclamantes e reclamados.';
+COMMENT ON TABLE funcionarios IS 'Registros dos funcionários do sistema, incluindo credenciais de acesso.';
+COMMENT ON TABLE procuradores IS 'Registros dos procuradores (advogados) que podem representar partes.';
+COMMENT ON TABLE reclamantes IS 'Armazena os dados da parte que inicia a reclamação (pessoa física ou jurídica).';
+COMMENT ON TABLE reclamados IS 'Armazena os dados da parte contra quem a reclamação é feita (pessoa física ou jurídica).';
+COMMENT ON TABLE audiencias IS 'Registra as audiências de conciliação associadas a uma ou mais reclamações.';
+COMMENT ON TABLE reclamacoes IS 'Tabela principal, contendo os detalhes de cada reclamação registrada.';
+COMMENT ON TABLE historico_status_reclamacoes IS 'Tabela de auditoria que armazena todas as mudanças de status de uma reclamação.';
+COMMENT ON TABLE relacao_reclamacao_reclamado IS 'Tabela de ligação (N-para-N) entre reclamações e reclamados.';
+COMMENT ON TABLE relacao_reclamacao_audiencia IS 'Tabela de ligação (N-para-N) entre reclamações e audiências.';
+
+COMMENT ON COLUMN reclamacoes.protocolo IS 'Coluna gerada automaticamente que combina número e ano para formar um protocolo único e legível (ex: 123/2024).';
+COMMENT ON COLUMN funcionarios.pwd_hash IS 'Hash da senha do funcionário, gerado por um algoritmo seguro (ex: bcrypt, scrypt).';
+COMMENT ON COLUMN funcionarios.salt IS 'Valor aleatório usado na geração do hash da senha para aumentar a segurança.';
+COMMENT ON COLUMN reclamantes.tipo_pessoa IS 'Define se o reclamante é Pessoa Física (F) ou Jurídica (J).';
+COMMENT ON COLUMN reclamados.tipo_pessoa IS 'Define se o reclamado é Pessoa Física (F) ou Jurídica (J).';
+
+COMMENT ON TRIGGER registrar_mudanca_status ON reclamacoes IS 'Acionado após uma atualização na tabela de reclamações para registrar a mudança de status no histórico.';

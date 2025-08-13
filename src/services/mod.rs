@@ -22,7 +22,7 @@ pub mod motivo {
     pub async fn get_all() -> Vec<intern::Motivo> {
         let pool = connect_db().await;
         
-        let motivos: Vec<database::Motivo> = sqlx::query_as("SELECT * FROM Motivo")
+        let motivos: Vec<database::Motivo> = sqlx::query_as("SELECT * FROM motivo")
             .fetch_all(&pool)
             .await
             .unwrap();
@@ -38,7 +38,5 @@ mod tests {
     #[tokio::test]
     async fn test_get_all_motivos_doesnt_panic() {
         let m = motivo::get_all().await;
-
-        println!("{:?}", m);
     }
 }
