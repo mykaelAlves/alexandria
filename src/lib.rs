@@ -31,13 +31,13 @@ pub mod log {
         write_to_log(&msg);
     }
 
-    pub fn err(msg: &str, err: Box<dyn Error>) -> Result<(), Box<dyn Error>> {
+    pub fn err(msg: &str, err: Box<dyn Error>) -> Box<dyn Error> {
         let time = get_time_now();
         let msg = format!("[{}][{time}] ({err}) {msg}", "ERRO".bright_red());
         eprintln!("{msg}");
         write_to_log(&msg);
 
-        Err(err)
+        err
     }
 
     pub fn debug(msg: &str) {
@@ -54,8 +54,6 @@ pub mod config {
 
     use crate::run::ServerApp;
 
-    pub static SERVER_APP: LazyLock<ServerApp> =
-        LazyLock::new(|| ServerApp::new().unwrap());
     pub const CONFIG_PATH: &str = "config/config.ron";
     const DEFAULT_LOGGING_PATH: &str = "server.log";
     pub static LOGGING_PATH: LazyLock<Mutex<String>> =
@@ -71,19 +69,25 @@ pub mod responses {
 
     pub const CONFIG_READING: &str = "Lendo configuração do servidor...";
 
+    pub const DATABASE_CONNECTING: &str =
+        "Conectando ao banco de dados...";
+
     pub const FAILED_CREATE_LISTENER: &str =
         "Houve um erro ao criar o listener!!";
     pub const FAILED_CREATE_SERVER: &str =
         "Houve um erro ao criar o servidor!!";
+    pub const FAILED_DATABASE_CONNECTION: &str =
+        "Houve um erro ao conectar ao banco de dados!!";
 }
 
 pub mod run {
-    use crate::config::SERVER_APP;
     use crate::handlers;
+    use crate::responses::{DATABASE_CONNECTING, FAILED_DATABASE_CONNECTION};
     use crate::{log::err, responses::SERVER_RUNNING};
     use axum::Router;
     use axum::routing::any;
     use serde::Deserialize;
+    use sqlx::postgres;
     use std::sync::atomic::AtomicBool;
     use std::{error::Error, net::SocketAddrV4};
     use tokio::net::TcpListener;
@@ -147,11 +151,29 @@ pub mod run {
         }
     }
 
-    pub struct GlobalState;
+    #[derive(Clone)]
+    struct GlobalState {
+        pg_pool: postgres::PgPool,
+    }
 
     impl GlobalState {
-        fn new() -> Result<Self, Box<dyn Error>> {
-            Ok(Self {})
+        async fn new(config: &Config) -> Result<Self, Box<dyn Error>> {
+            info(DATABASE_CONNECTING);
+
+            let pg_pool = match postgres::PgPoolOptions::new()
+                .max_connections(config.database.pool.max_connections as u32)
+                .connect(&config.database.url)
+                .await
+            {
+                Ok(pg_pool) => pg_pool,
+                Err(e) => {
+                    let e = err(FAILED_DATABASE_CONNECTION, Box::new(e));
+
+                    return Err(e);
+                }
+            };
+
+            Ok(Self { pg_pool })
         }
     }
 
@@ -162,11 +184,11 @@ pub mod run {
     }
 
     impl ServerApp {
-        pub fn new() -> Result<Self, Box<dyn Error>> {
+        pub async fn new() -> Result<Self, Box<dyn Error>> {
             info(SERVER_STARTED);
 
             let config = Config::new()?;
-            let state = GlobalState::new()?;
+            let state = GlobalState::new(&config).await?;
 
             Ok(Self {
                 is_running: AtomicBool::new(true),
@@ -176,12 +198,14 @@ pub mod run {
         }
 
         pub async fn run(&self) -> Result<(), Box<dyn Error>> {
-            let app: Router =
-                axum::Router::new().route("/", any(handlers::root));
+            let app: Router = axum::Router::new()
+                .route("/", any(handlers::root))
+                .with_state(self.state.clone());
 
-            let listener = match TcpListener::bind(self.get_ipv4()).await {
+            let listener = match TcpListener::bind(self.config.network.ip).await
+            {
                 Ok(l) => l,
-                Err(e) => return err(FAILED_CREATE_LISTENER, Box::new(e)),
+                Err(e) => return Err(err(FAILED_CREATE_LISTENER, Box::new(e))),
             };
 
             info(SERVER_RUNNING);
@@ -197,33 +221,20 @@ pub mod run {
             self.is_running
                 .store(false, std::sync::atomic::Ordering::SeqCst);
         }
-
-        pub fn get_ipv4(&self) -> SocketAddrV4 {
-            self.config.network.ip
-        }
-
-        pub fn get_database_url(&self) -> String {
-            self.config.database.url.clone()
-        }
-
-        pub fn get_max_connections(&self) -> u8 {
-            self.config.database.pool.max_connections
-        }
     }
 
     pub struct ServerGuard;
 
-    impl Drop for ServerGuard {
+    impl Drop for ServerApp {
         fn drop(&mut self) {
-            if SERVER_APP
+            if self
                 .is_running
                 .load(std::sync::atomic::Ordering::SeqCst)
             {
                 warn(SERVER_CLOSED_WRONGLY);
             }
 
-            SERVER_APP
-                .is_running
+            self.is_running
                 .store(false, std::sync::atomic::Ordering::SeqCst);
         }
     }
