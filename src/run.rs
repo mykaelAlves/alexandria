@@ -119,8 +119,7 @@ impl ServerApp {
             .route("/", any(handlers::root))
             .with_state(self.state.clone());
 
-        let listener = match TcpListener::bind(self.config.network.ip).await
-        {
+        let listener = match TcpListener::bind(self.config.network.ip).await {
             Ok(l) => l,
             Err(e) => return Err(err(FAILED_CREATE_LISTENER, Box::new(e))),
         };
