@@ -2,6 +2,8 @@ use chrono::prelude::*;
 use colored::Colorize;
 use std::error::Error;
 
+use crate::config::LOGGING_PATH;
+
 const TIMEZONE_OFFSET_SECONDS: i32 = -3 * 3600;
 
 fn time_now() -> String {
@@ -37,7 +39,13 @@ pub fn err(msg: &str, err: Box<dyn Error>) -> Box<dyn Error> {
 pub fn debug(msg: &str) {
     let time = time_now();
     let msg = format!("[DEBUG][{time}] {msg}").bright_black();
-    eprintln!("{msg}");
+    println!("{msg}");
 }
 
-fn write_to_log(msg: &str) {}
+fn write_to_log(msg: &str) {
+    let time = time_now();
+    let msg = format!("[{time}] {msg}").to_string();
+    let binding = LOGGING_PATH.lock().unwrap();
+    let log_path = std::path::Path::new(binding.as_str());
+    std::fs::write(log_path, msg).unwrap();
+}

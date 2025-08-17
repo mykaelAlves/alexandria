@@ -102,15 +102,19 @@ impl Diretorio {
     pub fn id_diretorio(&self) -> i32 {
         self.id_diretorio
     }
+
     pub fn caminho(&self) -> &str {
         &self.caminho
     }
+
     pub fn modificavel(&self) -> bool {
         self.modificavel
     }
+
     pub fn data_criacao(&self) -> DateTime<Utc> {
         self.data_criacao
     }
+
     pub fn data_modificacao(&self) -> DateTime<Utc> {
         self.data_modificacao
     }
@@ -135,33 +139,43 @@ impl Endereco {
     pub fn id_endereco(&self) -> i32 {
         self.id_endereco
     }
+
     pub fn cep(&self) -> &str {
         &self.cep
     }
+
     pub fn logradouro(&self) -> &str {
         &self.logradouro
     }
+
     pub fn numero(&self) -> &str {
         &self.numero
     }
+
     pub fn complemento(&self) -> Option<&str> {
         self.complemento.as_deref()
     }
+
     pub fn bairro(&self) -> &str {
         &self.bairro
     }
+
     pub fn cidade(&self) -> &str {
         &self.cidade
     }
+
     pub fn estado(&self) -> &Uf {
         &self.estado
     }
+
     pub fn pais(&self) -> &str {
         &self.pais
     }
+
     pub fn data_criacao(&self) -> DateTime<Utc> {
         self.data_criacao
     }
+
     pub fn data_modificacao(&self) -> DateTime<Utc> {
         self.data_modificacao
     }
@@ -186,33 +200,43 @@ impl Funcionario {
     pub fn id_funcionario(&self) -> i32 {
         self.id_funcionario
     }
+
     pub fn nome(&self) -> &str {
         &self.nome
     }
+
     pub fn id_cargo(&self) -> i32 {
         self.id_cargo
     }
+
     pub fn email(&self) -> Option<&str> {
         self.email.as_deref()
     }
+
     pub fn num_telefone(&self) -> Option<&str> {
         self.num_telefone.as_deref()
     }
+
     pub fn username(&self) -> &str {
         &self.username
     }
+
     pub fn pwd_hash(&self) -> &str {
         &self.pwd_hash
     }
+
     pub fn salt(&self) -> &str {
         &self.salt
     }
+
     pub fn data_criacao(&self) -> DateTime<Utc> {
         self.data_criacao
     }
+
     pub fn data_modificacao(&self) -> DateTime<Utc> {
         self.data_modificacao
     }
+
     pub fn data_desligamento(&self) -> Option<DateTime<Utc>> {
         self.data_desligamento
     }
@@ -234,24 +258,31 @@ impl Procurador {
     pub fn id_procurador(&self) -> i32 {
         self.id_procurador
     }
+
     pub fn nome(&self) -> &str {
         &self.nome
     }
+
     pub fn cpf(&self) -> &str {
         &self.cpf
     }
+
     pub fn oab(&self) -> &str {
         &self.oab
     }
+
     pub fn email(&self) -> Option<&str> {
         self.email.as_deref()
     }
+
     pub fn num_telefone(&self) -> Option<&str> {
         self.num_telefone.as_deref()
     }
+
     pub fn data_criacao(&self) -> DateTime<Utc> {
         self.data_criacao
     }
+
     pub fn data_modificacao(&self) -> DateTime<Utc> {
         self.data_modificacao
     }
@@ -274,27 +305,35 @@ impl Reclamante {
     pub fn id_reclamante(&self) -> i32 {
         self.id_reclamante
     }
+
     pub fn tipo_pessoa(&self) -> &str {
         &self.tipo_pessoa
     }
+
     pub fn nome(&self) -> &str {
         &self.nome
     }
+
     pub fn cpf(&self) -> Option<&str> {
         self.cpf.as_deref()
     }
+
     pub fn cnpj(&self) -> Option<&str> {
         self.cnpj.as_deref()
     }
+
     pub fn rg(&self) -> Option<&str> {
         self.rg.as_deref()
     }
+
     pub fn id_endereco(&self) -> i32 {
         self.id_endereco
     }
+
     pub fn data_criacao(&self) -> DateTime<Utc> {
         self.data_criacao
     }
+
     pub fn data_modificacao(&self) -> DateTime<Utc> {
         self.data_modificacao
     }
@@ -314,6 +353,56 @@ pub struct Reclamado {
     id_endereco: i32,
     data_criacao: DateTime<Utc>,
     data_modificacao: DateTime<Utc>,
+}
+
+impl Reclamado {
+    pub fn id_reclamado(&self) -> i32 {
+        self.id_reclamado
+    }
+
+    pub fn tipo_pessoa(&self) -> char {
+        self.tipo_pessoa
+    }
+
+    pub fn nome(&self) -> Option<&str> {
+        self.nome.as_deref()
+    }
+
+    pub fn razao_social(&self) -> Option<&str> {
+        self.razao_social.as_deref()
+    }
+
+    pub fn nome_fantasia(&self) -> Option<&str> {
+        self.nome_fantasia.as_deref()
+    }
+
+    pub fn cpf(&self) -> Option<&str> {
+        self.cpf.as_deref()
+    }
+
+    pub fn cnpj(&self) -> Option<&str> {
+        self.cnpj.as_deref()
+    }
+
+    pub fn email(&self) -> Option<&str> {
+        self.email.as_deref()
+    }
+
+    pub fn num_telefone(&self) -> Option<&str> {
+        self.num_telefone.as_deref()
+    }
+
+    pub fn id_endereco(&self) -> i32 {
+        self.id_endereco
+    }
+
+    pub fn data_criacao(&self) -> DateTime<Utc> {
+        self.data_criacao
+    }
+
+    pub fn data_modificacao(&self) -> DateTime<Utc> {
+        self.data_modificacao
+    }
 }
 
 #[derive(sqlx::FromRow, Debug)]
@@ -338,42 +427,55 @@ impl Reclamacao {
     pub fn id_reclamacao(&self) -> i32 {
         self.id_reclamacao
     }
+
     pub fn numero(&self) -> i32 {
         self.numero
     }
+
     pub fn ano(&self) -> i32 {
         self.ano
     }
+
     pub fn protocolo(&self) -> &str {
         &self.protocolo
     }
+
     pub fn id_reclamante(&self) -> i32 {
         self.id_reclamante
     }
+
     pub fn id_motivo(&self) -> i32 {
         self.id_motivo
     }
+
     pub fn id_procurador(&self) -> Option<i32> {
         self.id_procurador
     }
+
     pub fn observacao(&self) -> Option<&str> {
         self.observacao.as_deref()
     }
+
     pub fn atendido(&self) -> Option<bool> {
         self.atendido
     }
+
     pub fn id_criador(&self) -> i32 {
         self.id_criador
     }
+
     pub fn status(&self) -> &StatusReclamacao {
         &self.status
     }
+
     pub fn id_diretorio(&self) -> i32 {
         self.id_diretorio
     }
+
     pub fn data_criacao(&self) -> DateTime<Utc> {
         self.data_criacao
     }
+
     pub fn data_modificacao(&self) -> DateTime<Utc> {
         self.data_modificacao
     }
@@ -393,18 +495,23 @@ impl Audiencia {
     pub fn id_audiencia(&self) -> i32 {
         self.id_audiencia
     }
+
     pub fn id_conciliador(&self) -> i32 {
         self.id_conciliador
     }
+
     pub fn data(&self) -> DateTime<Utc> {
         self.data
     }
+
     pub fn meio(&self) -> Option<&MeioAudiencia> {
         self.meio.as_ref()
     }
+
     pub fn data_criacao(&self) -> DateTime<Utc> {
         self.data_criacao
     }
+
     pub fn data_modificacao(&self) -> DateTime<Utc> {
         self.data_modificacao
     }
@@ -417,6 +524,28 @@ pub struct HistoricoStatusReclamacao {
     status_anterior: StatusReclamacao,
     status_novo: StatusReclamacao,
     data_mudanca: DateTime<Utc>,
+}
+
+impl HistoricoStatusReclamacao {
+    pub fn id_historico(&self) -> i64 {
+        self.id_historico
+    }
+
+    pub fn id_reclamacao(&self) -> i32 {
+        self.id_reclamacao
+    }
+
+    pub fn status_anterior(&self) -> &StatusReclamacao {
+        &self.status_anterior
+    }
+
+    pub fn status_novo(&self) -> &StatusReclamacao {
+        &self.status_novo
+    }
+
+    pub fn data_mudanca(&self) -> DateTime<Utc> {
+        self.data_mudanca
+    }
 }
 
 #[derive(sqlx::FromRow, Debug)]

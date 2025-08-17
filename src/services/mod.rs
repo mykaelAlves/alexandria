@@ -6,14 +6,18 @@ use crate::models::intern;
 pub mod motivo {
     use super::*;
 
-    pub async fn get_all(pool: postgres::PgPool) -> Vec<intern::Motivo> {
+    pub async fn get_all<'a, E>(
+        executor: E,
+    ) -> Result<Vec<intern::Motivo>, sqlx::Error>
+    where
+        E: postgres::PgExecutor<'a>,
+    {
         let motivos: Vec<database::Motivo> =
             sqlx::query_as("SELECT * FROM motivo")
-                .fetch_all(&pool)
-                .await
-                .unwrap();
+                .fetch_all(executor)
+                .await?;
 
-        motivos.iter().map(|m| m.to_intern()).collect()
+        Ok(motivos.iter().map(|m| m.to_intern()).collect())
     }
 }
 

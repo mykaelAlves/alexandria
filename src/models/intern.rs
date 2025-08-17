@@ -117,6 +117,38 @@ impl Endereco {
             pais: pais.to_string(),
         }
     }
+
+    pub fn cep(&self) -> &str {
+        &self.cep
+    }
+
+    pub fn logradouro(&self) -> &str {
+        &self.logradouro
+    }
+
+    pub fn numero(&self) -> &str {
+        &self.numero
+    }
+
+    pub fn bairro(&self) -> &str {
+        &self.bairro
+    }
+
+    pub fn cidade(&self) -> &str {
+        &self.cidade
+    }
+
+    pub fn estado(&self) -> &Uf {
+        &self.estado
+    }
+
+    pub fn pais(&self) -> &str {
+        &self.pais
+    }
+
+    pub fn complemento(&self) -> Option<&str> {
+        self.complemento.as_deref()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -126,6 +158,24 @@ pub struct Funcionario {
     email: Option<String>,
     num_telefone: Option<String>,
     username: String,
+}
+
+impl Funcionario {
+    pub fn new(
+        nome: &str,
+        cargo: Cargo,
+        email: Option<String>,
+        num_telefone: Option<String>,
+        username: &str,
+    ) -> Self {
+        Self {
+            nome: nome.to_string(),
+            cargo,
+            email,
+            num_telefone,
+            username: username.to_string(),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
