@@ -3,7 +3,7 @@
 
 use chrono::{DateTime, Utc};
 
-#[derive(sqlx::Type, Debug, Clone)]
+#[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
 #[sqlx(type_name = "meio_audiencia_enum", rename_all = "PascalCase")]
 pub enum MeioAudiencia {
 	Remoto,
@@ -11,7 +11,7 @@ pub enum MeioAudiencia {
 	Presencial,
 }
 
-#[derive(sqlx::Type, Debug, Clone)]
+#[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
 #[sqlx(type_name = "status_reclamacao_enum", rename_all = "PascalCase")]
 pub enum StatusReclamacao {
 	EmTramitacao,
@@ -19,7 +19,7 @@ pub enum StatusReclamacao {
 	Desarquivado,
 }
 
-#[derive(sqlx::Type, Debug, Clone)]
+#[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
 #[sqlx(type_name = "tipo_pessoa_enum", rename_all = "PascalCase")]
 pub enum TipoPessoa {
 	Fisica,
@@ -27,7 +27,7 @@ pub enum TipoPessoa {
 }
 
 #[rustfmt::skip]
-#[derive(sqlx::Type, Debug, Clone)]
+#[derive(sqlx::Type, PartialEq, Debug, Clone, Copy)]
 #[sqlx(type_name = "uf_enum", rename_all = "UPPERCASE")]
 pub enum Uf {
     AC, AL, AP, AM, BA, CE, DF, ES, GO, MA, MT, MS,
@@ -99,7 +99,7 @@ pub struct Endereco {
 	pub cep: String,
 	pub logradouro: String,
 	pub numero: String,
-	pub complemento: String,
+	pub complemento: Option<String>,
 	pub bairro: String,
 	pub cidade: String,
 	pub estado: Uf,
@@ -141,14 +141,14 @@ pub struct ProcuradorId(pub i32);
 #[readonly::make]
 #[derive(sqlx::FromRow, Debug)]
 pub struct Procurador {
-    pub id_procurador: ProcuradorId,
-    pub nome: String,
-    pub cpf: String,
-    pub id_endereco: EnderecoId,
-    pub email: Option<String>,
-    pub num_telefone: Option<String>,
-    pub data_criacao: DateTime<Utc>,
-    pub data_modificacao: DateTime<Utc>,
+	pub id_procurador: ProcuradorId,
+	pub nome: String,
+	pub cpf: String,
+	pub id_endereco: EnderecoId,
+	pub email: Option<String>,
+	pub num_telefone: Option<String>,
+	pub data_criacao: DateTime<Utc>,
+	pub data_modificacao: DateTime<Utc>,
 }
 
 impl PartialEq for Procurador {
@@ -187,18 +187,18 @@ pub struct ReclamadoId(pub i32);
 #[readonly::make]
 #[derive(sqlx::FromRow, Debug)]
 pub struct Reclamado {
-    pub id_reclamado: ReclamadoId,
-    pub tipo_pessoa: TipoPessoa,
-    pub nome: Option<String>,
-    pub razao_social: Option<String>,
-    pub nome_fantasia: Option<String>,
-    pub cpf: Option<String>,
-    pub cnpj: Option<String>,
-    pub email: Option<String>,
-    pub num_telefone: Option<String>,
-    pub id_endereco: EnderecoId,
-    pub data_criacao: DateTime<Utc>,
-    pub data_modificacao: DateTime<Utc>,
+	pub id_reclamado: ReclamadoId,
+	pub tipo_pessoa: TipoPessoa,
+	pub nome: Option<String>,
+	pub razao_social: Option<String>,
+	pub nome_fantasia: Option<String>,
+	pub cpf: Option<String>,
+	pub cnpj: Option<String>,
+	pub email: Option<String>,
+	pub num_telefone: Option<String>,
+	pub id_endereco: EnderecoId,
+	pub data_criacao: DateTime<Utc>,
+	pub data_modificacao: DateTime<Utc>,
 }
 
 impl PartialEq for Reclamado {
@@ -214,18 +214,18 @@ pub struct AudienciaId(pub i32);
 #[readonly::make]
 #[derive(sqlx::FromRow, Debug)]
 pub struct Audiencia {
-    pub id_audiencia: AudienciaId,
-    pub id_conciliador: FuncionarioId,
-    pub data: DateTime<Utc>,
-    pub meio: Option<MeioAudiencia>,
-    pub data_criacao: DateTime<Utc>,
-    pub data_modificacao: DateTime<Utc>,
+	pub id_audiencia: AudienciaId,
+	pub id_conciliador: FuncionarioId,
+	pub data: DateTime<Utc>,
+	pub meio: Option<MeioAudiencia>,
+	pub data_criacao: DateTime<Utc>,
+	pub data_modificacao: DateTime<Utc>,
 }
 
 impl PartialEq for Audiencia {
-    fn eq(&self, other: &Self) -> bool {
-        self.id_audiencia == other.id_audiencia
-    }
+	fn eq(&self, other: &Self) -> bool {
+		self.id_audiencia == other.id_audiencia
+	}
 }
 
 #[derive(Debug, PartialEq, sqlx::Type)]
@@ -235,26 +235,26 @@ pub struct ReclamacaoId(pub i32);
 #[readonly::make]
 #[derive(sqlx::FromRow, Debug)]
 pub struct Reclamacao {
-    pub id_reclamacao: ReclamacaoId,
-    pub numero: i32,
-    pub ano: i32,
-    pub protocolo: String,
-    pub id_reclamante: ReclamanteId,
-    pub id_motivo: MotivoId,
-    pub id_procurador: Option<ProcuradorId>,
-    pub observacao: Option<String>,
-    pub atendido: Option<bool>,
-    pub id_criador: FuncionarioId,
-    pub status: StatusReclamacao,
-    pub id_diretorio: DiretorioId,
-    pub data_criacao: DateTime<Utc>,
-    pub data_modificacao: DateTime<Utc>,
+	pub id_reclamacao: ReclamacaoId,
+	pub numero: i32,
+	pub ano: i32,
+	pub protocolo: String,
+	pub id_reclamante: ReclamanteId,
+	pub id_motivo: MotivoId,
+	pub id_procurador: Option<ProcuradorId>,
+	pub observacao: Option<String>,
+	pub atendido: Option<bool>,
+	pub id_criador: FuncionarioId,
+	pub status: StatusReclamacao,
+	pub id_diretorio: DiretorioId,
+	pub data_criacao: DateTime<Utc>,
+	pub data_modificacao: DateTime<Utc>,
 }
 
 impl PartialEq for Reclamacao {
-    fn eq(&self, other: &Self) -> bool {
-        self.id_reclamacao == other.id_reclamacao
-    }
+	fn eq(&self, other: &Self) -> bool {
+		self.id_reclamacao == other.id_reclamacao
+	}
 }
 
 #[derive(Debug, PartialEq, sqlx::Type)]
@@ -264,11 +264,11 @@ pub struct HistoricoStatusReclamacaoId(pub i64);
 #[readonly::make]
 #[derive(sqlx::FromRow, Debug)]
 pub struct HistoricoStatusReclamacao {
-    pub id_historico: HistoricoStatusReclamacaoId,
-    pub id_reclamacao: ReclamacaoId,
-    pub status_anterior: StatusReclamacao,
-    pub status_novo: StatusReclamacao,
-    pub data_mudanca: DateTime<Utc>,
+	pub id_historico: HistoricoStatusReclamacaoId,
+	pub id_reclamacao: ReclamacaoId,
+	pub status_anterior: StatusReclamacao,
+	pub status_novo: StatusReclamacao,
+	pub data_mudanca: DateTime<Utc>,
 }
 
 impl PartialEq for HistoricoStatusReclamacao {
@@ -280,20 +280,20 @@ impl PartialEq for HistoricoStatusReclamacao {
 #[readonly::make]
 #[derive(sqlx::FromRow, PartialEq, Debug)]
 pub struct RelacaoReclamacaoReclamado {
-    pub id_reclamacao: ReclamacaoId,
-    pub id_reclamado: ReclamadoId,
+	pub id_reclamacao: ReclamacaoId,
+	pub id_reclamado: ReclamadoId,
 }
 
 #[readonly::make]
 #[derive(sqlx::FromRow, PartialEq, Debug)]
 pub struct RelacaoReclamacaoAudiencia {
-    pub id_reclamacao: ReclamacaoId,
-    pub id_audiencia: AudienciaId,
+	pub id_reclamacao: ReclamacaoId,
+	pub id_audiencia: AudienciaId,
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
+	use super::*;
 
 	#[test]
 	fn test_partial_eq() {
@@ -317,15 +317,15 @@ mod test {
 		assert_ne!(cargo1, cargo3);
 	}
 
-    #[test]
-    fn test_newtype() {
-        let id_cargo = CargoId(1);
-        assert_eq!(id_cargo.0, 1);
+	#[test]
+	fn test_newtype() {
+		let id_cargo = CargoId(1);
+		assert_eq!(id_cargo.0, 1);
 
-        let id_motivo = MotivoId(1);
-        assert_eq!(id_motivo.0, 1);
+		let id_motivo = MotivoId(1);
+		assert_eq!(id_motivo.0, 1);
 
-        let id_diretorio = DiretorioId(2);
-        assert_eq!(id_diretorio.0, 2);
-    }
+		let id_diretorio = DiretorioId(2);
+		assert_eq!(id_diretorio.0, 2);
+	}
 }

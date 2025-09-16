@@ -1,4 +1,7 @@
-use axum::{http::StatusCode, response::{Html, IntoResponse}};
+use axum::{
+	http::StatusCode,
+	response::{Html, IntoResponse},
+};
 
 use crate::log::debug;
 
@@ -9,7 +12,7 @@ pub async fn root() -> impl IntoResponse {
 	let body = Html(
 		r#"
 		<h1>Alexandria</h1>
-	"#,
+		"#,
 	);
 
 	(StatusCode::OK, body)

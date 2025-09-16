@@ -24,6 +24,4 @@ pub mod motivo {
 }
 
 #[cfg(test)]
-mod tests {
-
-}
+mod tests {}
