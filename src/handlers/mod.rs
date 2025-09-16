@@ -1,10 +1,16 @@
-use axum::{http::StatusCode, response::IntoResponse};
+use axum::{http::StatusCode, response::{Html, IntoResponse}};
 
 use crate::log::debug;
 
 pub async fn root() -> impl IntoResponse {
-    #[cfg(debug_assertions)]
-    debug("Requisição para /");
+	#[cfg(debug_assertions)]
+	debug("Requisição para /");
 
-    StatusCode::FORBIDDEN
+	let body = Html(
+		r#"
+		<h1>Alexandria</h1>
+	"#,
+	);
+
+	(StatusCode::OK, body)
 }

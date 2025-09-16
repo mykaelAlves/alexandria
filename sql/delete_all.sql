@@ -33,6 +33,7 @@ DROP FUNCTION IF EXISTS trigger_registrar_mudanca_status();
 
 DROP TYPE IF EXISTS meio_audiencia_enum;
 DROP TYPE IF EXISTS status_reclamacao_enum;
+DROP TYPE IF EXISTS tipo_pessoa_enum;
 DROP TYPE IF EXISTS uf_enum;
 
 DROP DOMAIN IF EXISTS d_cpf;

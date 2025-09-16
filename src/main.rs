@@ -4,10 +4,10 @@ use alexandria::run::ServerApp;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let server_app = ServerApp::new().await?;
+	let server_app = ServerApp::new().await?;
 
-    server_app.run().await?;
-    server_app.shutdown().await;
+	server_app.run().await?;
+	server_app.shutdown().await;
 
-    Ok(())
+	Ok(())
 }

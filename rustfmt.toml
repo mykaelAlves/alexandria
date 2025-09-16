@@ -3,5 +3,7 @@ comment_width               = 60
 max_width                   = 80
 wrap_comments               = true
 reorder_impl_items          = true
+format_strings              = true
+hard_tabs                   = true
 newline_style               = "Unix"
 style_edition               = "2024"

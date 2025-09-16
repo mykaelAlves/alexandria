@@ -28,6 +28,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE TYPE meio_audiencia_enum AS ENUM ('Remoto', 'Hibrido', 'Presencial');
 CREATE TYPE status_reclamacao_enum AS ENUM ('EmTramitacao', 'Arquivado', 'Desarquivado');
+CREATE TYPE tipo_pessoa_enum AS ENUM ('Fisica', 'Juridica');
 CREATE TYPE uf_enum AS ENUM (
   'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
   'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
@@ -57,6 +58,9 @@ CREATE TABLE cargos (
 CREATE TABLE motivos (
   id_motivo INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   nome VARCHAR(255) NOT NULL UNIQUE,
+  artigo SMALLINT NOT NULL,
+  paragrafo_unico BOOLEAN NOT NULL,
+  inciso SMALLINT NULL,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -100,7 +104,7 @@ CREATE TABLE procuradores (
   id_procurador INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   nome VARCHAR(255) NOT NULL,
   cpf d_cpf NOT NULL UNIQUE,
-  oab VARCHAR(20) NOT NULL UNIQUE,
+  id_endereco INT NOT NULL REFERENCES enderecos(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
   email d_email NULL,
   num_telefone VARCHAR(20) NULL,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -109,22 +113,21 @@ CREATE TABLE procuradores (
 
 CREATE TABLE reclamantes (
   id_reclamante INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  tipo_pessoa CHAR(1) NOT NULL,
+  tipo_pessoa tipo_pessoa_enum NOT NULL,
   nome VARCHAR(255) NOT NULL,
   cpf d_cpf NULL UNIQUE,
   cnpj d_cnpj NULL UNIQUE,
-  rg VARCHAR(20) NULL UNIQUE,
   id_endereco INT NOT NULL REFERENCES enderecos(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_reclamante_tipo_pessoa
-    CHECK ((tipo_pessoa = 'F' AND cpf IS NOT NULL AND cnpj IS NULL) OR
-           (tipo_pessoa = 'J' AND cnpj IS NOT NULL AND cpf IS NULL))
+    CHECK ((tipo_pessoa = 'Fisica' AND cpf IS NOT NULL AND cnpj IS NULL) OR
+           (tipo_pessoa = 'Juridica' AND cnpj IS NOT NULL AND cpf IS NULL))
 );
 
 CREATE TABLE reclamados (
   id_reclamado INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  tipo_pessoa CHAR(1) NOT NULL,
+  tipo_pessoa tipo_pessoa_enum NOT NULL,
   nome VARCHAR(255) NULL,
   razao_social VARCHAR(255) NULL,
   nome_fantasia VARCHAR(255) NULL,
@@ -136,8 +139,8 @@ CREATE TABLE reclamados (
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_reclamado_tipo_pessoa
-    CHECK ((tipo_pessoa = 'F' AND cpf IS NOT NULL AND nome IS NOT NULL AND cnpj IS NULL AND razao_social IS NULL) OR
-           (tipo_pessoa = 'J' AND cnpj IS NOT NULL AND razao_social IS NOT NULL AND cpf IS NULL AND nome IS NULL))
+    CHECK ((tipo_pessoa = 'Fisica' AND cpf IS NOT NULL AND nome IS NOT NULL AND cnpj IS NULL AND razao_social IS NULL) OR
+           (tipo_pessoa = 'Juridica' AND cnpj IS NOT NULL AND razao_social IS NOT NULL AND cpf IS NULL AND nome IS NULL))
 );
 
 CREATE TABLE audiencias (
@@ -248,9 +251,9 @@ COMMENT ON TABLE relacao_reclamacao_reclamado IS 'Tabela de ligação (N-para-N)
 COMMENT ON TABLE relacao_reclamacao_audiencia IS 'Tabela de ligação (N-para-N) entre reclamações e audiências.';
 
 COMMENT ON COLUMN reclamacoes.protocolo IS 'Coluna gerada automaticamente que combina número e ano para formar um protocolo único e legível (ex: 123/2024).';
-COMMENT ON COLUMN funcionarios.pwd_hash IS 'Hash da senha do funcionário, gerado por um algoritmo seguro (ex: bcrypt, scrypt).';
+COMMENT ON COLUMN funcionarios.pwd_hash IS 'Hash da senha do funcionário, gerado por um algoritmo seguro.';
 COMMENT ON COLUMN funcionarios.salt IS 'Valor aleatório usado na geração do hash da senha para aumentar a segurança.';
-COMMENT ON COLUMN reclamantes.tipo_pessoa IS 'Define se o reclamante é Pessoa Física (F) ou Jurídica (J).';
-COMMENT ON COLUMN reclamados.tipo_pessoa IS 'Define se o reclamado é Pessoa Física (F) ou Jurídica (J).';
+COMMENT ON COLUMN reclamantes.tipo_pessoa IS 'Define se o reclamante é Pessoa Física (Fisica) ou Jurídica (Juridica).';
+COMMENT ON COLUMN reclamados.tipo_pessoa IS 'Define se o reclamado é Pessoa Física (Fisica) ou Jurídica (Juridica).';
 
 COMMENT ON TRIGGER registrar_mudanca_status ON reclamacoes IS 'Acionado após uma atualização na tabela de reclamações para registrar a mudança de status no histórico.';

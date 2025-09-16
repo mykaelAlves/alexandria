@@ -1,220 +1,134 @@
+//! Modelos utilizados para empacotar dados entre a
+//! aplicação e o banco de dados, e transmissão de dados
+//! pela rede.
+
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+use crate::models::database;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum MeioAudiencia {
-    Remoto,
-    Hibrido,
-    Presencial,
+	Remoto,
+	Hibrido,
+	Presencial,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum StatusReclamacao {
-    EmTramitacao,
-    Arquivado,
-    Desarquivado,
+	EmTramitacao,
+	Arquivado,
+	Desarquivado,
 }
 
 #[rustfmt::skip]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Uf {
     AC, AL, AP, AM, BA, CE, DF, ES, GO, MA, MT, MS,
     MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SC,
     SP, SE, TO,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[rustfmt::skip]
+impl From<&database::Uf> for Uf {
+    fn from(uf: &database::Uf) -> Self {
+        match uf {
+            database::Uf::AC => Uf::AC, database::Uf::AL => Uf::AL,
+            database::Uf::AP => Uf::AP, database::Uf::AM => Uf::AM,
+            database::Uf::BA => Uf::BA, database::Uf::CE => Uf::CE,
+            database::Uf::DF => Uf::DF, database::Uf::ES => Uf::ES,
+            database::Uf::GO => Uf::GO, database::Uf::MA => Uf::MA,
+            database::Uf::MT => Uf::MT, database::Uf::MS => Uf::MS,
+            database::Uf::MG => Uf::MG, database::Uf::PA => Uf::PA,
+            database::Uf::PB => Uf::PB, database::Uf::PR => Uf::PR,
+            database::Uf::PE => Uf::PE, database::Uf::PI => Uf::PI,
+            database::Uf::RJ => Uf::RJ, database::Uf::RN => Uf::RN,
+            database::Uf::RS => Uf::RS, database::Uf::RO => Uf::RO,
+            database::Uf::RR => Uf::RR, database::Uf::SC => Uf::SC,
+            database::Uf::SP => Uf::SP, database::Uf::SE => Uf::SE,
+            database::Uf::TO => Uf::TO,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Cargo {
-    titulo: String,
+	pub titulo: String,
 }
 
 impl Cargo {
-    pub fn new(cargo: &str) -> Self {
-        Self {
-            titulo: cargo.to_string(),
-        }
-    }
+	pub fn new(titulo: &str) -> Self {
+		Self {
+			titulo: titulo.to_string(),
+		}
+	}
+}
 
-    pub fn titulo(&self) -> &str {
-        &self.titulo
-    }
+impl From<&database::Cargo> for Cargo {
+	fn from(cargo: &database::Cargo) -> Self {
+		Self {
+			titulo: cargo.titulo.clone(),
+		}
+	}
+}
+
+impl From<&str> for Cargo {
+	fn from(titulo: &str) -> Self {
+		Self {
+			titulo: titulo.to_string(),
+		}
+	}
+}
+
+impl From<String> for Cargo {
+	fn from(titulo: String) -> Self {
+		Self { titulo }
+	}
+}
+
+impl From<&Cargo> for String {
+	fn from(cargo: &Cargo) -> Self {
+		cargo.titulo.clone()
+	}
 }
 
 impl PartialEq for Cargo {
-    fn eq(&self, other: &Self) -> bool {
-        self.titulo == other.titulo
-    }
+	fn eq(&self, other: &Self) -> bool {
+		self.titulo == other.titulo
+	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Motivo {
-    nome: String,
-}
-
-impl Motivo {
-    pub fn new(motivo: &str) -> Self {
-        Self {
-            nome: motivo.to_string(),
-        }
-    }
-
-    pub fn nome(&self) -> &str {
-        &self.nome
-    }
+	pub nome: String,
+	pub artigo: i16,
+	pub paragrafo_unico: bool,
+	pub inciso: Option<i16>,
 }
 
 impl PartialEq for Motivo {
-    fn eq(&self, other: &Self) -> bool {
-        self.nome == other.nome
-    }
+	fn eq(&self, other: &Self) -> bool {
+		self.nome == other.nome
+	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Diretorio {
-    caminho: String,
-    modificavel: bool,
+impl From<&database::Motivo> for Motivo {
+	fn from(motivo: &database::Motivo) -> Self {
+		Self {
+			nome: motivo.nome.clone(),
+			artigo: motivo.artigo,
+			paragrafo_unico: motivo.paragrafo_unico,
+			inciso: motivo.inciso,
+		}
+	}
 }
 
-impl Diretorio {
-    pub fn new(caminho: &str, modificavel: bool) -> Self {
-        Self {
-            caminho: caminho.to_string(),
-            modificavel,
-        }
-    }
-}
+#[cfg(test)]
+mod test {
+	use super::*;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Endereco {
-    cep: String,
-    logradouro: String,
-    numero: String,
-    complemento: Option<String>,
-    bairro: String,
-    cidade: String,
-    estado: Uf,
-    pais: String,
-}
-
-impl Endereco {
-    pub fn new(
-        cep: &str,
-        logradouro: &str,
-        numero: &str,
-        complemento: Option<String>,
-        bairro: &str,
-        cidade: &str,
-        estado: Uf,
-        pais: &str,
-    ) -> Self {
-        Self {
-            cep: cep.to_string(),
-            logradouro: logradouro.to_string(),
-            numero: numero.to_string(),
-            complemento,
-            bairro: bairro.to_string(),
-            cidade: cidade.to_string(),
-            estado,
-            pais: pais.to_string(),
-        }
-    }
-
-    pub fn cep(&self) -> &str {
-        &self.cep
-    }
-
-    pub fn logradouro(&self) -> &str {
-        &self.logradouro
-    }
-
-    pub fn numero(&self) -> &str {
-        &self.numero
-    }
-
-    pub fn bairro(&self) -> &str {
-        &self.bairro
-    }
-
-    pub fn cidade(&self) -> &str {
-        &self.cidade
-    }
-
-    pub fn estado(&self) -> &Uf {
-        &self.estado
-    }
-
-    pub fn pais(&self) -> &str {
-        &self.pais
-    }
-
-    pub fn complemento(&self) -> Option<&str> {
-        self.complemento.as_deref()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Funcionario {
-    nome: String,
-    cargo: Cargo,
-    email: Option<String>,
-    num_telefone: Option<String>,
-    username: String,
-}
-
-impl Funcionario {
-    pub fn new(
-        nome: &str,
-        cargo: Cargo,
-        email: Option<String>,
-        num_telefone: Option<String>,
-        username: &str,
-    ) -> Self {
-        Self {
-            nome: nome.to_string(),
-            cargo,
-            email,
-            num_telefone,
-            username: username.to_string(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Procurador {
-    nome: String,
-    cpf: String,
-    oab: String,
-    email: Option<String>,
-    num_telefone: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Reclamante {
-    tipo_pessoa: String,
-    nome: String,
-    cpf: Option<String>,
-    cnpj: Option<String>,
-    rg: Option<String>,
-    endereco: Endereco,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Reclamado {
-    tipo_pessoa: String,
-    nome: Option<String>,
-    razao_social: Option<String>,
-    nome_fantasia: Option<String>,
-    cpf: Option<String>,
-    cnpj: Option<String>,
-    email: Option<String>,
-    num_telefone: Option<String>,
-    endereco: Endereco,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Reclamacao {
-    numero: i32,
-    ano: i32,
-    protocolo: String,
-    reclamante: Reclamante,
-    reclamado: Reclamado,
+	#[test]
+	fn test_cargo_from_str() {
+		let cargo: Cargo = "Desenvolvedor".into();
+		assert_eq!(cargo.titulo, "Desenvolvedor");
+	}
 }
