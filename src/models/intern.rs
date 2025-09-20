@@ -310,7 +310,7 @@ impl TryFrom<(&database::Procurador, &database::Endereco)> for Procurador {
 		if procurador.id_endereco.0 != endereco.id_endereco.0 {
 			return Err("Endereço não corresponde ao procurador");
 		}
-		
+
 		Ok(Self {
 			nome: procurador.nome.clone(),
 			cpf: procurador.cpf.clone(),
@@ -463,8 +463,12 @@ impl TryFrom<&str> for Protocolo {
 			return Err("Formato inválido");
 		}
 
-		let numero = parts[0].parse::<i32>().map_err(|_| "Número inválido")?;
-		let ano = parts[1].parse::<i32>().map_err(|_| "Ano inválido")?;
+		let numero = parts[0]
+			.parse::<i32>()
+			.map_err(|_| "Número inválido")?;
+		let ano = parts[1]
+			.parse::<i32>()
+			.map_err(|_| "Ano inválido")?;
 
 		Ok(Self { numero, ano })
 	}
@@ -487,7 +491,9 @@ pub struct Reclamacao {
 
 impl Reclamacao {
 	pub fn audiencia_marcada_at(&self, data_hora: DateTime<Utc>) -> bool {
-		self.audiencias.iter().any(|a| a.data_hora == data_hora)
+		self.audiencias
+			.iter()
+			.any(|a| a.data_hora == data_hora)
 	}
 
 	pub fn has_reclamado(&self, reclamado: &Reclamado) -> bool {
