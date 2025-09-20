@@ -36,10 +36,10 @@ CREATE TYPE uf_enum AS ENUM (
 );
 
 CREATE DOMAIN d_cpf AS VARCHAR(11)
-  CHECK (VALUE ~ '^[0-9]{11}$' AND VALUE IS NOT NULL);
+  CHECK (VALUE ~ '^[0-9]{11}$');
 
 CREATE DOMAIN d_cnpj AS VARCHAR(14)
-  CHECK (VALUE ~ '^[0-9]{14}$' AND VALUE IS NOT NULL);
+  CHECK (VALUE ~ '^[0-9]{14}$');
 
 CREATE DOMAIN d_email AS VARCHAR(255)
   CHECK (VALUE ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
@@ -146,16 +146,16 @@ CREATE TABLE reclamados (
 CREATE TABLE audiencias (
   id_audiencia INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   id_conciliador INT NOT NULL REFERENCES funcionarios(id_funcionario) ON DELETE RESTRICT ON UPDATE CASCADE,
-  data TIMESTAMPTZ NOT NULL,
-  meio meio_audiencia_enum NULL,
+  data_hora TIMESTAMPTZ NOT NULL,
+  meio meio_audiencia_enum NOT NULL,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE reclamacoes (
   id_reclamacao INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  numero INT NOT NULL,
-  ano INT NOT NULL,
+  numero INT NOT NULL CHECK (numero > 0),
+  ano INT NOT NULL CHECK (ano >= 1900),
   protocolo VARCHAR(20) GENERATED ALWAYS AS (numero || '/' || ano) STORED,
   id_reclamante INT NOT NULL REFERENCES reclamantes(id_reclamante) ON DELETE RESTRICT ON UPDATE CASCADE,
   id_motivo INT NOT NULL REFERENCES motivos(id_motivo) ON DELETE RESTRICT ON UPDATE CASCADE,

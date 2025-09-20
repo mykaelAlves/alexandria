@@ -35,7 +35,7 @@ pub enum Uf {
     SP, SE, TO,
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct CargoId(pub i32);
 
@@ -53,7 +53,7 @@ impl PartialEq for Cargo {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct MotivoId(pub i32);
 
@@ -74,7 +74,7 @@ impl PartialEq for Motivo {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct DiretorioId(pub i32);
 
@@ -88,7 +88,7 @@ pub struct Diretorio {
 	pub data_modificacao: DateTime<Utc>,
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct EnderecoId(pub i32);
 
@@ -108,7 +108,7 @@ pub struct Endereco {
 	pub data_modificacao: DateTime<Utc>,
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct FuncionarioId(pub i32);
 
@@ -134,7 +134,7 @@ impl PartialEq for Funcionario {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct ProcuradorId(pub i32);
 
@@ -157,7 +157,7 @@ impl PartialEq for Procurador {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct ReclamanteId(pub i32);
 
@@ -180,7 +180,7 @@ impl PartialEq for Reclamante {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct ReclamadoId(pub i32);
 
@@ -207,7 +207,7 @@ impl PartialEq for Reclamado {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct AudienciaId(pub i32);
 
@@ -216,8 +216,8 @@ pub struct AudienciaId(pub i32);
 pub struct Audiencia {
 	pub id_audiencia: AudienciaId,
 	pub id_conciliador: FuncionarioId,
-	pub data: DateTime<Utc>,
-	pub meio: Option<MeioAudiencia>,
+	pub data_hora: DateTime<Utc>,
+	pub meio: MeioAudiencia,
 	pub data_criacao: DateTime<Utc>,
 	pub data_modificacao: DateTime<Utc>,
 }
@@ -228,7 +228,7 @@ impl PartialEq for Audiencia {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct ReclamacaoId(pub i32);
 
@@ -257,7 +257,7 @@ impl PartialEq for Reclamacao {
 	}
 }
 
-#[derive(Debug, PartialEq, sqlx::Type)]
+#[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct HistoricoStatusReclamacaoId(pub i64);
 
@@ -290,6 +290,10 @@ pub struct RelacaoReclamacaoAudiencia {
 	pub id_reclamacao: ReclamacaoId,
 	pub id_audiencia: AudienciaId,
 }
+
+//
+// Test
+//
 
 #[cfg(test)]
 mod test {
