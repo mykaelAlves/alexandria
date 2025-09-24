@@ -184,6 +184,17 @@ impl From<&database::Motivo> for Motivo {
 	}
 }
 
+impl From<database::Motivo> for Motivo {
+	fn from(motivo: database::Motivo) -> Self {
+		Self {
+			nome: motivo.nome.clone(),
+			artigo: motivo.artigo,
+			paragrafo_unico: motivo.paragrafo_unico,
+			inciso: motivo.inciso,
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Diretorio {
 	pub caminho: String,

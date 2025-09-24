@@ -2,7 +2,7 @@ use crate::handlers;
 use crate::responses::{DATABASE_CONNECTING, FAILED_DATABASE_CONNECTION};
 use crate::{log::err, responses::SERVER_RUNNING};
 use axum::Router;
-use axum::routing::any;
+use axum::routing::{any, get};
 use serde::Deserialize;
 use sqlx::postgres;
 use std::sync::atomic::AtomicBool;
@@ -68,9 +68,10 @@ impl Config {
 	}
 }
 
+#[readonly::make]
 #[derive(Clone)]
-struct GlobalState {
-	pg_pool: postgres::PgPool,
+pub struct GlobalState {
+	pub pg_pool: postgres::PgPool,
 }
 
 impl GlobalState {
@@ -117,6 +118,8 @@ impl ServerApp {
 	pub async fn run(&self) -> Result<(), Box<dyn Error>> {
 		let app: Router = axum::Router::new()
 			.route("/", any(handlers::root))
+			.route("/motivo", any(handlers::motivo::root))
+			.route("/motivo/list", get(handlers::motivo::list))
 			.with_state(self.state.clone());
 
 		let listener = match TcpListener::bind(self.config.network.ip).await {
@@ -136,6 +139,10 @@ impl ServerApp {
 
 		self.is_running
 			.store(false, std::sync::atomic::Ordering::SeqCst);
+	}
+
+	pub fn state(&self) -> &GlobalState {
+		&self.state
 	}
 }
 
