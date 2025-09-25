@@ -474,12 +474,8 @@ impl TryFrom<&str> for Protocolo {
 			return Err("Formato inválido");
 		}
 
-		let numero = parts[0]
-			.parse::<i32>()
-			.map_err(|_| "Número inválido")?;
-		let ano = parts[1]
-			.parse::<i32>()
-			.map_err(|_| "Ano inválido")?;
+		let numero = parts[0].parse::<i32>().map_err(|_| "Número inválido")?;
+		let ano = parts[1].parse::<i32>().map_err(|_| "Ano inválido")?;
 
 		Ok(Self { numero, ano })
 	}
@@ -502,9 +498,7 @@ pub struct Reclamacao {
 
 impl Reclamacao {
 	pub fn audiencia_marcada_at(&self, data_hora: DateTime<Utc>) -> bool {
-		self.audiencias
-			.iter()
-			.any(|a| a.data_hora == data_hora)
+		self.audiencias.iter().any(|a| a.data_hora == data_hora)
 	}
 
 	pub fn has_reclamado(&self, reclamado: &Reclamado) -> bool {

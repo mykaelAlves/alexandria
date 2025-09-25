@@ -28,9 +28,11 @@ pub mod motivo {
 	                          $4) RETURNING id_motivo, nome, artigo, \
 	                          paragrafo_unico, inciso, data_criacao";
 
-	pub const DELETE_BY_ID: &str = "DELETE FROM motivos WHERE id_motivo = $1";
+	pub const DELETE_BY_ID: &str =
+		"DELETE FROM motivos WHERE id_motivo = $1 RETURNING nome";
 
-	pub const DELETE_BY_NOME: &str = "DELETE FROM motivos WHERE nome = $1";
+	pub const DELETE_BY_NOME: &str =
+		"DELETE FROM motivos WHERE nome = $1 RETURNING ";
 
 	pub const UPDATE_BY_ID: &str =
 		"UPDATE motivos SET nome = $1, artigo = $2, paragrafo_unico = $3, \

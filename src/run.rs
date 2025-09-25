@@ -150,10 +150,7 @@ pub struct ServerGuard;
 
 impl Drop for ServerApp {
 	fn drop(&mut self) {
-		if self
-			.is_running
-			.load(std::sync::atomic::Ordering::SeqCst)
-		{
+		if self.is_running.load(std::sync::atomic::Ordering::SeqCst) {
 			warn(SERVER_CLOSED_WRONGLY);
 		}
 

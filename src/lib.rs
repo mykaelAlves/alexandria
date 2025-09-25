@@ -1,4 +1,5 @@
 pub mod config;
+pub mod error;
 pub mod handlers;
 pub mod log;
 pub mod models;
