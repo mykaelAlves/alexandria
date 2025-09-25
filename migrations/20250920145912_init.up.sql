@@ -1,8 +1,3 @@
--- Add up migration script here
--- =============================================================================
--- SEÇÃO 1: FUNÇÕES DE TRIGGER
--- =============================================================================
-
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -23,10 +18,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- =============================================================================
--- SEÇÃO 2: TIPOS PERSONALIZADOS (ENUMs e DOMAINs)
--- =============================================================================
-
 CREATE TYPE meio_audiencia_enum AS ENUM ('Remoto', 'Hibrido', 'Presencial');
 CREATE TYPE status_reclamacao_enum AS ENUM ('EmTramitacao', 'Arquivado', 'Desarquivado');
 CREATE TYPE tipo_pessoa_enum AS ENUM ('Fisica', 'Juridica');
@@ -45,10 +36,6 @@ CREATE DOMAIN d_cnpj AS VARCHAR(14)
 CREATE DOMAIN d_email AS VARCHAR(255)
   CHECK (VALUE ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
 
-
--- =============================================================================
--- SEÇÃO 3: CRIAÇÃO DAS TABELAS
--- =============================================================================
 
 CREATE TABLE cargos (
   id_cargo INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -192,10 +179,6 @@ CREATE TABLE relacao_reclamacao_audiencia (
 );
 
 
--- =============================================================================
--- SEÇÃO 4: CRIAÇÃO DOS TRIGGERS
--- =============================================================================
-
 CREATE TRIGGER set_timestamp_diretorios BEFORE UPDATE ON diretorios FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 CREATE TRIGGER set_timestamp_enderecos BEFORE UPDATE ON enderecos FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 CREATE TRIGGER set_timestamp_funcionarios BEFORE UPDATE ON funcionarios FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
@@ -206,10 +189,6 @@ CREATE TRIGGER set_timestamp_audiencias BEFORE UPDATE ON audiencias FOR EACH ROW
 CREATE TRIGGER set_timestamp_reclamacoes BEFORE UPDATE ON reclamacoes FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 CREATE TRIGGER registrar_mudanca_status AFTER UPDATE ON reclamacoes FOR EACH ROW WHEN (OLD.status IS DISTINCT FROM NEW.status) EXECUTE FUNCTION trigger_registrar_mudanca_status();
 
-
--- =============================================================================
--- SEÇÃO 5: CRIAÇÃO DOS ÍNDICES
--- =============================================================================
 
 CREATE INDEX idx_funcionarios_id_cargo ON funcionarios(id_cargo);
 CREATE INDEX idx_reclamantes_id_endereco ON reclamantes(id_endereco);
@@ -225,10 +204,6 @@ CREATE INDEX idx_historico_id_reclamacao ON historico_status_reclamacoes(id_recl
 CREATE INDEX idx_rel_reclamado_id_reclamado ON relacao_reclamacao_reclamado(id_reclamado);
 CREATE INDEX idx_rel_audiencia_id_audiencia ON relacao_reclamacao_audiencia(id_audiencia);
 
-
--- =============================================================================
--- SEÇÃO 6: DOCUMENTAÇÃO (COMMENTS)
--- =============================================================================
 
 COMMENT ON FUNCTION trigger_set_timestamp IS 'Atualiza a coluna data_modificacao para a data e hora atuais sempre que uma linha é atualizada.';
 COMMENT ON FUNCTION trigger_registrar_mudanca_status IS 'Registra a mudança de status de uma reclamação na tabela de histórico.';

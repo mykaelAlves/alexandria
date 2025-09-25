@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use alexandria::run::ServerApp;
+use alexandria::app::ServerApp;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

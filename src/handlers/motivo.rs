@@ -4,7 +4,7 @@ use axum::{
 };
 
 use crate::{log::err, services::entities::motivo, util::Paginated};
-use crate::{models::intern, run::GlobalState};
+use crate::{models::intern, app::GlobalState};
 
 use super::*;
 

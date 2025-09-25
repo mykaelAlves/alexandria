@@ -1,6 +1,6 @@
 use crate::handlers;
-use crate::responses::{DATABASE_CONNECTING, FAILED_DATABASE_CONNECTION};
-use crate::{log::err, responses::SERVER_RUNNING};
+use crate::response::{DATABASE_CONNECTING, FAILED_DATABASE_CONNECTION};
+use crate::{log::err, response::SERVER_RUNNING};
 use axum::Router;
 use axum::routing::{any, get};
 use serde::Deserialize;
@@ -12,7 +12,7 @@ use tokio::net::TcpListener;
 use crate::{
 	config::{CONFIG_PATH, LOGGING_PATH},
 	log::{debug, info, warn},
-	responses::{
+	response::{
 		CONFIG_READING, FAILED_CREATE_LISTENER, SERVER_CLOSED,
 		SERVER_CLOSED_WRONGLY, SERVER_STARTED,
 	},
