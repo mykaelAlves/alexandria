@@ -17,12 +17,19 @@ DROP FUNCTION IF EXISTS trigger_set_timestamp();
 DROP FUNCTION IF EXISTS trigger_registrar_mudanca_status();
 
 
+DROP DOMAIN IF EXISTS d_cpf;
+DROP DOMAIN IF EXISTS d_cnpj;
+DROP DOMAIN IF EXISTS d_email;
+
+
+DROP FUNCTION IF EXISTS validar_cpf(TEXT);
+DROP FUNCTION IF EXISTS validar_cnpj(TEXT);
+
+
 DROP TYPE IF EXISTS meio_audiencia_enum;
 DROP TYPE IF EXISTS status_reclamacao_enum;
 DROP TYPE IF EXISTS tipo_pessoa_enum;
 DROP TYPE IF EXISTS uf_enum;
 
 
-DROP DOMAIN IF EXISTS d_cpf;
-DROP DOMAIN IF EXISTS d_cnpj;
-DROP DOMAIN IF EXISTS d_email;
+DROP EXTENSION IF EXISTS pgcrypto;

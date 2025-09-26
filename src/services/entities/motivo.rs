@@ -2,7 +2,7 @@ use crate::models::database;
 use crate::models::database::MotivoId;
 use crate::models::intern;
 use crate::services::queries;
-use crate::util::Paginated;
+use crate::util::{capitalize_words, Paginated};
 
 fn from_db_vec(motivos_db: Vec<database::Motivo>) -> Vec<intern::Motivo> {
 	motivos_db.into_iter().map(|m| m.into()).collect()
@@ -47,7 +47,7 @@ where
 {
 	let motivo: Option<database::Motivo> =
 		sqlx::query_as(queries::motivo::GET_BY_NOME)
-			.bind(nome)
+			.bind(capitalize_words(nome))
 			.fetch_optional(executor)
 			.await?;
 

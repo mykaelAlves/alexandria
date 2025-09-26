@@ -37,6 +37,7 @@ impl ServerApp {
 			.route("/", any(handlers::root))
 			.route("/motivo", any(handlers::entities::motivo::root))
 			.route("/motivo/list", get(handlers::entities::motivo::list))
+			.route("/motivo/get", get(handlers::entities::motivo::get))
 			.with_state(self.state.clone());
 
 		let listener = match TcpListener::bind(self.config.network.ip).await {

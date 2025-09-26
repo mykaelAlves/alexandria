@@ -1,3 +1,102 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE OR REPLACE FUNCTION validar_cpf(cpf TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+    cpf_limpo TEXT;
+    soma INT;
+    resto INT;
+    digito1 INT;
+    digito2 INT;
+BEGIN
+    -- Remove caracteres não numéricos
+    cpf_limpo := REGEXP_REPLACE(cpf, '[^0-9]', '', 'g');
+
+    -- Verifica se possui 11 dígitos e se não são todos iguais
+    IF LENGTH(cpf_limpo) != 11 OR cpf_limpo ~ '^(.)\1+$' THEN
+        RETURN FALSE;
+    END IF;
+
+    -- Cálculo do primeiro dígito verificador
+    soma := 0;
+    FOR i IN 1..9 LOOP
+        soma := soma + CAST(SUBSTRING(cpf_limpo FROM i FOR 1) AS INT) * (11 - i);
+    END LOOP;
+    resto := soma % 11;
+    digito1 := CASE WHEN resto < 2 THEN 0 ELSE 11 - resto END;
+
+    -- Verifica o primeiro dígito
+    IF digito1 != CAST(SUBSTRING(cpf_limpo FROM 10 FOR 1) AS INT) THEN
+        RETURN FALSE;
+    END IF;
+
+    -- Cálculo do segundo dígito verificador
+    soma := 0;
+    FOR i IN 1..10 LOOP
+        soma := soma + CAST(SUBSTRING(cpf_limpo FROM i FOR 1) AS INT) * (12 - i);
+    END LOOP;
+    resto := soma % 11;
+    digito2 := CASE WHEN resto < 2 THEN 0 ELSE 11 - resto END;
+
+    -- Verifica o segundo dígito
+    IF digito2 != CAST(SUBSTRING(cpf_limpo FROM 11 FOR 1) AS INT) THEN
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION validar_cnpj(cnpj TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE
+    cnpj_limpo TEXT;
+    soma INT;
+    resto INT;
+    digito1 INT;
+    digito2 INT;
+    pesos1 INT[] := ARRAY[5,4,3,2,9,8,7,6,5,4,3,2];
+    pesos2 INT[] := ARRAY[6,5,4,3,2,9,8,7,6,5,4,3,2];
+BEGIN
+    -- Remove caracteres não numéricos
+    cnpj_limpo := REGEXP_REPLACE(cnpj, '[^0-9]', '', 'g');
+
+    -- Verifica se possui 14 dígitos e se não são todos iguais
+    IF LENGTH(cnpj_limpo) != 14 OR cnpj_limpo ~ '^(.)\1+$' THEN
+        RETURN FALSE;
+    END IF;
+
+    -- Cálculo do primeiro dígito verificador
+    soma := 0;
+    FOR i IN 1..12 LOOP
+        soma := soma + CAST(SUBSTRING(cnpj_limpo FROM i FOR 1) AS INT) * pesos1[i];
+    END LOOP;
+    resto := soma % 11;
+    digito1 := CASE WHEN resto < 2 THEN 0 ELSE 11 - resto END;
+
+    -- Verifica o primeiro dígito
+    IF digito1 != CAST(SUBSTRING(cnpj_limpo FROM 13 FOR 1) AS INT) THEN
+        RETURN FALSE;
+    END IF;
+
+    -- Cálculo do segundo dígito verificador
+    soma := 0;
+    FOR i IN 1..13 LOOP
+        soma := soma + CAST(SUBSTRING(cnpj_limpo FROM i FOR 1) AS INT) * pesos2[i];
+    END LOOP;
+    resto := soma % 11;
+    digito2 := CASE WHEN resto < 2 THEN 0 ELSE 11 - resto END;
+
+    -- Verifica o segundo dígito
+    IF digito2 != CAST(SUBSTRING(cnpj_limpo FROM 14 FOR 1) AS INT) THEN
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -27,11 +126,14 @@ CREATE TYPE uf_enum AS ENUM (
   'SP', 'SE', 'TO'
 );
 
+
 CREATE DOMAIN d_cpf AS VARCHAR(11)
-  CHECK (VALUE ~ '^[0-9]{11}$');
+  CHECK (VALUE ~ '^[0-9]{11}$')
+  CHECK (validar_cpf(VALUE));
 
 CREATE DOMAIN d_cnpj AS VARCHAR(14)
-  CHECK (VALUE ~ '^[0-9]{14}$');
+  CHECK (VALUE ~ '^[0-9]{14}$')
+  CHECK (validar_cnpj(VALUE));
 
 CREATE DOMAIN d_email AS VARCHAR(255)
   CHECK (VALUE ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
@@ -83,7 +185,6 @@ CREATE TABLE funcionarios (
   num_telefone VARCHAR(20) NULL,
   username VARCHAR(100) NOT NULL UNIQUE,
   pwd_hash VARCHAR(255) NOT NULL,
-  salt VARCHAR(255) NOT NULL,
   data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   data_desligamento TIMESTAMPTZ NULL
@@ -206,13 +307,16 @@ CREATE INDEX idx_rel_reclamado_id_reclamado ON relacao_reclamacao_reclamado(id_r
 CREATE INDEX idx_rel_audiencia_id_audiencia ON relacao_reclamacao_audiencia(id_audiencia);
 
 
+COMMENT ON FUNCTION validar_cpf IS 'Valida os dígitos verificadores de um CPF, garantindo sua autenticidade matemática.';
+COMMENT ON FUNCTION validar_cnpj IS 'Valida os dígitos verificadores de um CNPJ, garantindo sua autenticidade matemática.';
+
+COMMENT ON DOMAIN d_cpf IS 'Domínio para armazenar CPF, garantindo que contenha 11 dígitos numéricos e que seja um número válido conforme o algoritmo do governo.';
+COMMENT ON DOMAIN d_cnpj IS 'Domínio para armazenar CNPJ, garantindo que contenha 14 dígitos numéricos e que seja um número válido conforme o algoritmo do governo.';
+
+COMMENT ON COLUMN funcionarios.pwd_hash IS 'Hash da senha do funcionário. Gerado por um algoritmo seguro (ex: bcrypt via pgcrypto), o hash já contém o salt.';
 COMMENT ON FUNCTION trigger_set_timestamp IS 'Atualiza a coluna data_modificacao para a data e hora atuais sempre que uma linha é atualizada.';
 COMMENT ON FUNCTION trigger_registrar_mudanca_status IS 'Registra a mudança de status de uma reclamação na tabela de histórico.';
-
-COMMENT ON DOMAIN d_cpf IS 'Domínio para armazenar CPF, garantindo que contenha 11 dígitos numéricos.';
-COMMENT ON DOMAIN d_cnpj IS 'Domínio para armazenar CNPJ, garantindo que contenha 14 dígitos numéricos.';
 COMMENT ON DOMAIN d_email IS 'Domínio para validar e armazenar endereços de e-mail.';
-
 COMMENT ON TABLE cargos IS 'Armazena os diferentes cargos que um funcionário pode ocupar.';
 COMMENT ON TABLE motivos IS 'Catálogo de motivos que podem originar uma reclamação.';
 COMMENT ON TABLE diretorios IS 'Armazena caminhos de diretórios no sistema de arquivos para associar a reclamações.';
@@ -226,11 +330,7 @@ COMMENT ON TABLE reclamacoes IS 'Tabela principal, contendo os detalhes de cada 
 COMMENT ON TABLE historico_status_reclamacoes IS 'Tabela de auditoria que armazena todas as mudanças de status de uma reclamação.';
 COMMENT ON TABLE relacao_reclamacao_reclamado IS 'Tabela de ligação (N-para-N) entre reclamações e reclamados.';
 COMMENT ON TABLE relacao_reclamacao_audiencia IS 'Tabela de ligação (N-para-N) entre reclamações e audiências.';
-
 COMMENT ON COLUMN reclamacoes.protocolo IS 'Coluna gerada automaticamente que combina número e ano para formar um protocolo único e legível (ex: 123/2024).';
-COMMENT ON COLUMN funcionarios.pwd_hash IS 'Hash da senha do funcionário, gerado por um algoritmo seguro.';
-COMMENT ON COLUMN funcionarios.salt IS 'Valor aleatório usado na geração do hash da senha para aumentar a segurança.';
 COMMENT ON COLUMN reclamantes.tipo_pessoa IS 'Define se o reclamante é Pessoa Física (Fisica) ou Jurídica (Juridica).';
 COMMENT ON COLUMN reclamados.tipo_pessoa IS 'Define se o reclamado é Pessoa Física (Fisica) ou Jurídica (Juridica).';
-
 COMMENT ON TRIGGER registrar_mudanca_status ON reclamacoes IS 'Acionado após uma atualização na tabela de reclamações para registrar a mudança de status no histórico.';
