@@ -18,6 +18,51 @@ use crate::{
 	},
 };
 
+impl ServerApp {
+	pub async fn new() -> Result<Self, Box<dyn Error>> {
+		info(SERVER_STARTED);
+
+		let config = Config::new()?;
+		let state = GlobalState::new(&config).await?;
+
+		Ok(Self {
+			is_running: AtomicBool::new(true),
+			state,
+			config,
+		})
+	}
+
+	pub async fn run(&self) -> Result<(), Box<dyn Error>> {
+		let app: Router = axum::Router::new()
+			.route("/", any(handlers::root))
+			.route("/motivo", any(handlers::entities::motivo::root))
+			.route("/motivo/list", get(handlers::entities::motivo::list))
+			.with_state(self.state.clone());
+
+		let listener = match TcpListener::bind(self.config.network.ip).await {
+			Ok(l) => l,
+			Err(e) => return Err(err(FAILED_CREATE_LISTENER, Box::new(e))),
+		};
+
+		info(SERVER_RUNNING);
+
+		axum::serve(listener, app.into_make_service()).await?;
+
+		Ok(())
+	}
+
+	pub async fn shutdown(&self) {
+		warn(SERVER_CLOSED);
+
+		self.is_running
+			.store(false, std::sync::atomic::Ordering::SeqCst);
+	}
+
+	pub fn state(&self) -> &GlobalState {
+		&self.state
+	}
+}
+
 #[derive(Deserialize)]
 struct Database {
 	url: String,
@@ -99,51 +144,6 @@ pub struct ServerApp {
 	is_running: AtomicBool,
 	state: GlobalState,
 	config: Config,
-}
-
-impl ServerApp {
-	pub async fn new() -> Result<Self, Box<dyn Error>> {
-		info(SERVER_STARTED);
-
-		let config = Config::new()?;
-		let state = GlobalState::new(&config).await?;
-
-		Ok(Self {
-			is_running: AtomicBool::new(true),
-			state,
-			config,
-		})
-	}
-
-	pub async fn run(&self) -> Result<(), Box<dyn Error>> {
-		let app: Router = axum::Router::new()
-			.route("/", any(handlers::root))
-			.route("/motivo", any(handlers::motivo::root))
-			.route("/motivo/list", get(handlers::motivo::list))
-			.with_state(self.state.clone());
-
-		let listener = match TcpListener::bind(self.config.network.ip).await {
-			Ok(l) => l,
-			Err(e) => return Err(err(FAILED_CREATE_LISTENER, Box::new(e))),
-		};
-
-		info(SERVER_RUNNING);
-
-		axum::serve(listener, app.into_make_service()).await?;
-
-		Ok(())
-	}
-
-	pub async fn shutdown(&self) {
-		warn(SERVER_CLOSED);
-
-		self.is_running
-			.store(false, std::sync::atomic::Ordering::SeqCst);
-	}
-
-	pub fn state(&self) -> &GlobalState {
-		&self.state
-	}
 }
 
 pub struct ServerGuard;

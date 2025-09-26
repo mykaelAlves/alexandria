@@ -108,11 +108,10 @@ pub async fn delete_by_id<'a, E>(
 where
 	E: sqlx::Executor<'a, Database = sqlx::Postgres>,
 {
-	let result: (String,) =
-		sqlx::query_as(queries::motivo::DELETE_BY_ID)
-			.bind(id)
-			.fetch_one(executor)
-			.await?;
+	let result: (String,) = sqlx::query_as(queries::motivo::DELETE_BY_ID)
+		.bind(id)
+		.fetch_one(executor)
+		.await?;
 
 	Ok(result.0)
 }
@@ -152,6 +151,26 @@ where
 	Ok(())
 }
 
+pub async fn update_by_nome<'a, E>(
+	executor: E,
+	nome: &str,
+	motivo: intern::Motivo,
+) -> Result<(), sqlx::Error>
+where
+	E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+{
+	sqlx::query(queries::motivo::UPDATE_BY_NOME)
+		.bind(&motivo.nome)
+		.bind(motivo.artigo)
+		.bind(motivo.paragrafo_unico)
+		.bind(motivo.inciso)
+		.bind(nome)
+		.execute(executor)
+		.await?;
+
+	Ok(())
+}
+
 #[cfg(test)]
 mod tests {
 	use sqlx::PgPool;
@@ -159,8 +178,7 @@ mod tests {
 	use super::*;
 
 	#[sqlx::test(migrations = "./migrations")]
-	async fn test_get_all_empty(pool: PgPool) -> sqlx::Result<()>
-	{
+	async fn test_get_all_empty(pool: PgPool) -> sqlx::Result<()> {
 		let mut conn = pool.acquire().await?;
 
 		let motivos = get_all(&mut *conn).await?;
@@ -168,7 +186,8 @@ mod tests {
 		Ok(())
 	}
 
-	async fn test_get_all_twenty(pool: &PgPool) -> sqlx::Result<()> {
+	#[sqlx::test(migrations = "./migrations")]
+	async fn test_get_all_twenty(pool: PgPool) -> sqlx::Result<()> {
 		for i in 1..=20 {
 			let motivo = intern::Motivo {
 				nome: format!("Motivo {}", i),
@@ -176,10 +195,10 @@ mod tests {
 				paragrafo_unico: i % 2 == 0,
 				inciso: if i % 3 == 0 { Some(i as i16) } else { None },
 			};
-			insert(pool, motivo).await?;
+			insert(&pool, motivo).await?;
 		}
 
-		let motivos = get_all(pool).await?;
+		let motivos = get_all(&pool).await?;
 		assert_eq!(motivos.len(), 20);
 		Ok(())
 	}

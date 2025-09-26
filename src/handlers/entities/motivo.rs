@@ -1,12 +1,14 @@
 use axum::{
 	Json,
 	extract::{Query, State},
+	response::{Html, IntoResponse},
 };
+use hyper::StatusCode;
 
+#[cfg(debug_assertions)]
+use crate::log::debug;
+use crate::{app::GlobalState, models::intern, util::Pagination};
 use crate::{log::err, services::entities::motivo, util::Paginated};
-use crate::{models::intern, app::GlobalState};
-
-use super::*;
 
 /// Handler ANY /motivo
 pub async fn root() -> impl IntoResponse {

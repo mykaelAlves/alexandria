@@ -1,3 +1,3 @@
 pub mod entities;
-mod queries;
 pub mod file;
+mod queries;

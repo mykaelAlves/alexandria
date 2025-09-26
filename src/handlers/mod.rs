@@ -20,4 +20,4 @@ pub async fn root() -> impl IntoResponse {
 	(StatusCode::OK, body)
 }
 
-pub mod motivo;
+pub mod entities;

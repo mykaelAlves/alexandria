@@ -1,9 +1,10 @@
+pub mod app;
 pub mod config;
 pub mod error;
 pub mod handlers;
 pub mod log;
+pub mod middleware;
 pub mod models;
 pub mod response;
-pub mod app;
 pub mod services;
 pub mod util;
