@@ -49,7 +49,8 @@ CREATE TABLE motivos (
   artigo SMALLINT NOT NULL,
   paragrafo_unico BOOLEAN NOT NULL,
   inciso SMALLINT NULL,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE diretorios (

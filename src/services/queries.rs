@@ -32,15 +32,13 @@ pub mod motivo {
 		"DELETE FROM motivos WHERE id_motivo = $1 RETURNING nome";
 
 	pub const DELETE_BY_NOME: &str =
-		"DELETE FROM motivos WHERE nome = $1 RETURNING ";
+		"DELETE FROM motivos WHERE nome = $1";
 
 	pub const UPDATE_BY_ID: &str =
 		"UPDATE motivos SET nome = $1, artigo = $2, paragrafo_unico = $3, \
-		 inciso = $4 WHERE id_motivo = $5 RETURNING id_motivo, nome, artigo, \
-		 paragrafo_unico, inciso, data_criacao";
+		 inciso = $4 WHERE id_motivo = $5";
 
 	pub const UPDATE_BY_NOME: &str =
 		"UPDATE motivos SET nome = $1, artigo = $2, paragrafo_unico = $3, \
-		 inciso = $4 WHERE nome = $5 RETURNING id_motivo, nome, artigo, \
-		 paragrafo_unico, inciso, data_criacao";
+		 inciso = $4 WHERE nome = $5";
 }

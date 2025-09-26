@@ -66,6 +66,7 @@ pub struct Motivo {
 	pub paragrafo_unico: bool,
 	pub inciso: Option<i16>,
 	pub data_criacao: DateTime<Utc>,
+	pub data_modificacao: DateTime<Utc>,
 }
 
 impl PartialEq for Motivo {
