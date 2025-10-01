@@ -82,6 +82,12 @@ struct Network {
 }
 
 #[derive(Deserialize)]
+struct Storage {
+	log: String,
+	data: String,
+}
+
+#[derive(Deserialize)]
 struct Auth {
 	jwt_secret: String,
 	jwt_expiration_in_min: u16,
@@ -92,7 +98,7 @@ struct Auth {
 struct Config {
 	network: Network,
 	database: Database,
-	logging_path: String,
+	storage: Storage,
 	auth: Auth,
 }
 
@@ -106,9 +112,10 @@ impl Config {
 		debug(&s);
 
 		let config: Self = ron::from_str(&s)?;
+		
 		let mut logging_path_lock = LOGGING_PATH.lock().unwrap();
 		logging_path_lock.clear();
-		logging_path_lock.push_str(&config.logging_path);
+		logging_path_lock.push_str(&config.storage.log);
 
 		Ok(config)
 	}

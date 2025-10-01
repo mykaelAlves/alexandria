@@ -12,11 +12,14 @@ Config(
         ),
     ),
 
-    logging_path: "my/path/to/file.log",
-
     auth: (
         jwt_secret: "secret",
         jwt_expiration_in_min: 30,
         jwt_issuer: "alexandria-api"
     ),
+
+    storage: (
+        log: "my/path/to/file.log",
+        data: "my/path/to/data/directory",
+    )
 )
