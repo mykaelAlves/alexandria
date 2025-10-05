@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::handlers;
 use crate::response::{DATABASE_CONNECTING, FAILED_DATABASE_CONNECTION};
 use crate::{log::err, response::SERVER_RUNNING};
@@ -59,6 +61,7 @@ impl ServerApp {
 			.store(false, std::sync::atomic::Ordering::SeqCst);
 	}
 
+	#[inline]
 	pub fn state(&self) -> &GlobalState {
 		&self.state
 	}
@@ -112,7 +115,7 @@ impl Config {
 		debug(&s);
 
 		let config: Self = ron::from_str(&s)?;
-		
+
 		let mut logging_path_lock = LOGGING_PATH.lock().unwrap();
 		logging_path_lock.clear();
 		logging_path_lock.push_str(&config.storage.log);

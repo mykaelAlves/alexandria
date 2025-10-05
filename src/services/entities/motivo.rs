@@ -2,7 +2,7 @@ use crate::models::database;
 use crate::models::database::MotivoId;
 use crate::models::intern;
 use crate::services::queries;
-use crate::util::{capitalize_words, Paginated};
+use crate::util::{Paginated, capitalize_words};
 
 fn from_db_vec(motivos_db: Vec<database::Motivo>) -> Vec<intern::Motivo> {
 	motivos_db.into_iter().map(|m| m.into()).collect()

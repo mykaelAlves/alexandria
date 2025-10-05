@@ -4,7 +4,6 @@ use axum::{
 };
 
 use crate::log::debug;
-use crate::util::Pagination;
 
 /// Handler ANY /
 pub async fn root() -> impl IntoResponse {
