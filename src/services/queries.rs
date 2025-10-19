@@ -89,6 +89,11 @@ pub mod diretorio {
 	                             data_criacao, data_modificacao FROM \
 	                             diretorios WHERE id_diretorio = $1";
 
+	pub const GET_BY_PROTOCOLO: &str =
+		"SELECT d.id_diretorio, d.caminho, d.modificavel, d.data_criacao, \
+		 d.data_modificacao FROM diretorios d JOIN reclamacoes r ON \
+		 r.id_diretorio = d.id_diretorio WHERE r.protocolo = $1";
+
 	pub const INSERT: &str = "INSERT INTO diretorios (caminho, modificavel) \
 	                          VALUES ($1, $2) RETURNING id_diretorio, \
 	                          caminho, modificavel, data_criacao, \

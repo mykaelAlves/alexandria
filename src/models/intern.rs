@@ -216,6 +216,15 @@ impl From<&database::Diretorio> for Diretorio {
 	}
 }
 
+impl From<database::Diretorio> for Diretorio {
+	fn from(diretorio: database::Diretorio) -> Self {
+		Self {
+			caminho: diretorio.caminho.clone(),
+			modificavel: diretorio.modificavel,
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Endereco {
 	pub cep: String,
@@ -462,6 +471,12 @@ pub struct Protocolo {
 impl PartialEq for Protocolo {
 	fn eq(&self, other: &Self) -> bool {
 		self.numero == other.numero && self.ano == other.ano
+	}
+}
+
+impl From<&Protocolo> for String {
+	fn from(protocolo: &Protocolo) -> Self {
+		format!("{:04}-{}", protocolo.numero, protocolo.ano)
 	}
 }
 

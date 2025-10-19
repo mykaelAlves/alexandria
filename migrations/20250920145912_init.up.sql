@@ -246,7 +246,7 @@ CREATE TABLE reclamacoes (
   id_reclamacao INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   numero INT NOT NULL CHECK (numero > 0),
   ano INT NOT NULL CHECK (ano >= 1900),
-  protocolo VARCHAR(20) GENERATED ALWAYS AS (numero || '/' || ano) STORED,
+  protocolo VARCHAR(20) GENERATED ALWAYS AS (numero || '-' || ano) STORED,
   id_reclamante INT NOT NULL REFERENCES reclamantes(id_reclamante) ON DELETE RESTRICT ON UPDATE CASCADE,
   id_motivo INT NOT NULL REFERENCES motivos(id_motivo) ON DELETE RESTRICT ON UPDATE CASCADE,
   id_procurador INT NULL REFERENCES procuradores(id_procurador) ON DELETE SET NULL ON UPDATE CASCADE,

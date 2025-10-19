@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 
 use crate::handlers;
-use crate::response::{DATABASE_CONNECTING, FAILED_DATABASE_CONNECTION};
+use crate::response::{
+	DATABASE_CONNECTED, DATABASE_CONNECTING, FAILED_DATABASE_CONNECTION,
+};
 use crate::{log::err, response::SERVER_RUNNING};
 use axum::Router;
 use axum::routing::{any, get};
@@ -139,7 +141,11 @@ impl GlobalState {
 			.connect(&config.database.url)
 			.await
 		{
-			Ok(pg_pool) => pg_pool,
+			Ok(pg_pool) => {
+				info(DATABASE_CONNECTED);
+
+				pg_pool
+			}
 			Err(e) => {
 				let e = err(FAILED_DATABASE_CONNECTION, Box::new(e));
 

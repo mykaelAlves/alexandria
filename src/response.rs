@@ -7,6 +7,7 @@ pub const SERVER_CLOSED_WRONGLY: &str =
 pub const CONFIG_READING: &str = "Lendo configuração do servidor...";
 
 pub const DATABASE_CONNECTING: &str = "Conectando ao banco de dados...";
+pub const DATABASE_CONNECTED: &str = "Conectado ao banco de dados.";
 
 pub const FAILED_CREATE_LISTENER: &str = "Houve um erro ao criar o listener!!";
 pub const FAILED_CREATE_SERVER: &str = "Houve um erro ao criar o servidor!!";

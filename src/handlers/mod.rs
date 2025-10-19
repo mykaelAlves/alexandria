@@ -20,3 +20,4 @@ pub async fn root() -> impl IntoResponse {
 }
 
 pub mod entities;
+pub mod file;

@@ -1,9 +1,9 @@
+use axum::http::StatusCode;
 use axum::{
 	Json,
 	extract::{Query, State},
 	response::{Html, IntoResponse},
 };
-use hyper::StatusCode;
 use serde::Deserialize;
 
 #[cfg(debug_assertions)]
@@ -19,8 +19,19 @@ pub async fn root() -> impl IntoResponse {
 
 	let body = Html(
 		r#"
-        <h1>Motivo</h1>
-        "#,
+		<h1>Motivo API</h1>
+		<h2>Endpoints</h2>
+		<ul>
+			<li><strong>GET /motivo/list?page={}&per_page={}</strong> - Listar motivos com paginação</li>
+			<li><strong>POST /motivo/create</strong> - Criar novo motivo (JSON body)</li>
+			<li><strong>GET /motivo/get?id={}</strong> - Obter motivo por ID</li>
+			<li><strong>GET /motivo/get?nome={}</strong> - Obter motivo por nome</li>
+		</ul>
+		<h2>Exemplos</h2>
+		<p><code>GET /motivo/list?page=1&per_page=10</code></p>
+		<p><code>POST /motivo/create</code> com JSON: <code>{"nome": "Motivo exemplo"}</code></p>
+		<p><code>GET /motivo/get?id=1</code></p>
+		"#,
 	);
 
 	(StatusCode::OK, body)
