@@ -31,7 +31,7 @@ pub fn warn(msg: &str) {
 
 pub fn err(msg: &str, err: Box<dyn Error>) -> Box<dyn Error> {
 	let time = time_now();
-	let msg = format!("[{}][{time}] ({err}) {msg}", "ERRO".bright_red());
+	let msg = format!("[{}][{time}] {msg}: {err}", "ERRO".bright_red());
 	eprintln!("{msg}");
 	write_to_log(&msg);
 

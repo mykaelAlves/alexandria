@@ -64,6 +64,16 @@ impl From<&database::TipoPessoa> for TipoPessoa {
 	}
 }
 
+impl Display for TipoPessoa {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let tipo_str = match self {
+			TipoPessoa::Fisica => "Pessoa Física",
+			TipoPessoa::Juridica => "Pessoa Jurídica",
+		};
+		write!(f, "{tipo_str}")
+	}
+}
+
 #[rustfmt::skip]
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub enum Uf {
@@ -125,6 +135,12 @@ impl Cargo {
 	}
 }
 
+impl PartialEq for Cargo {
+	fn eq(&self, other: &Self) -> bool {
+		self.titulo == other.titulo
+	}
+}
+
 impl From<&database::Cargo> for Cargo {
 	fn from(cargo: &database::Cargo) -> Self {
 		Self {
@@ -135,9 +151,7 @@ impl From<&database::Cargo> for Cargo {
 
 impl From<&str> for Cargo {
 	fn from(titulo: &str) -> Self {
-		Self {
-			titulo: titulo.to_string(),
-		}
+		Self::new(titulo)
 	}
 }
 
@@ -150,12 +164,6 @@ impl From<String> for Cargo {
 impl From<&Cargo> for String {
 	fn from(cargo: &Cargo) -> Self {
 		cargo.titulo.clone()
-	}
-}
-
-impl PartialEq for Cargo {
-	fn eq(&self, other: &Self) -> bool {
-		self.titulo == other.titulo
 	}
 }
 
@@ -291,6 +299,12 @@ pub struct Funcionario {
 	pub ativo: bool,
 }
 
+impl PartialEq for Funcionario {
+	fn eq(&self, other: &Self) -> bool {
+		self.username == other.username
+	}
+}
+
 impl TryFrom<(&database::Funcionario, &database::Cargo)> for Funcionario {
 	type Error = &'static str;
 
@@ -319,6 +333,12 @@ pub struct Procurador {
 	pub endereco: Endereco,
 	pub email: Option<String>,
 	pub num_telefone: Option<String>,
+}
+
+impl PartialEq for Procurador {
+	fn eq(&self, other: &Self) -> bool {
+		self.cpf == other.cpf
+	}
 }
 
 impl TryFrom<(&database::Procurador, &database::Endereco)> for Procurador {
@@ -350,24 +370,43 @@ pub struct Reclamante {
 	pub endereco: Endereco,
 }
 
+impl PartialEq for Reclamante {
+	fn eq(&self, other: &Self) -> bool {
+		match (&self.cpf, &self.cnpj, &other.cpf, &other.cnpj) {
+			(Some(cpf1), _, Some(cpf2), _) => cpf1 == cpf2,
+			(_, Some(cnpj1), _, Some(cnpj2)) => cnpj1 == cnpj2,
+			_ => false,
+		}
+	}
+}
+
+impl From<&database::ReclamanteExpanded> for Reclamante {
+	fn from(reclamante_expanded: &database::ReclamanteExpanded) -> Self {
+		Self {
+			tipo_pessoa: TipoPessoa::from(&reclamante_expanded.tipo_pessoa),
+			nome: reclamante_expanded.nome.clone(),
+			cpf: reclamante_expanded.cpf.clone(),
+			cnpj: reclamante_expanded.cnpj.clone(),
+			endereco: Endereco {
+				cep: reclamante_expanded.endereco_cep.clone(),
+				logradouro: reclamante_expanded.endereco_logradouro.clone(),
+				numero: reclamante_expanded.endereco_numero.clone(),
+				complemento: reclamante_expanded.endereco_complemento.clone(),
+				bairro: reclamante_expanded.endereco_bairro.clone(),
+				cidade: reclamante_expanded.endereco_cidade.clone(),
+				estado: Uf::from(&reclamante_expanded.endereco_estado),
+				pais: reclamante_expanded.endereco_pais.clone(),
+			},
+		}
+	}
+}
+
 impl TryFrom<(&database::Reclamante, &database::Endereco)> for Reclamante {
 	type Error = &'static str;
 
 	fn try_from(
 		(reclamante, endereco): (&database::Reclamante, &database::Endereco),
 	) -> Result<Self, Self::Error> {
-		if reclamante.tipo_pessoa == database::TipoPessoa::Fisica
-			&& reclamante.cpf.is_none()
-		{
-			return Err("Reclamante pessoa física deve ter CPF");
-		}
-
-		if reclamante.tipo_pessoa == database::TipoPessoa::Juridica
-			&& reclamante.cnpj.is_none()
-		{
-			return Err("Reclamante pessoa jurídica deve ter CNPJ");
-		}
-
 		if reclamante.id_endereco.0 != endereco.id_endereco.0 {
 			return Err("Endereço não corresponde ao reclamante");
 		}
@@ -395,24 +434,24 @@ pub struct Reclamado {
 	pub endereco: Endereco,
 }
 
+impl PartialEq for Reclamado {
+	fn eq(&self, other: &Self) -> bool {
+		match (&self.cpf, &self.cnpj, &other.cpf, &other.cnpj) {
+			(Some(cpf1), _, Some(cpf2), _) => {
+				cpf1 == cpf2 && self.nome_fantasia == other.nome_fantasia
+			}
+			(_, Some(cnpj1), _, Some(cnpj2)) => cnpj1 == cnpj2,
+			_ => false,
+		}
+	}
+}
+
 impl TryFrom<(&database::Reclamado, &database::Endereco)> for Reclamado {
 	type Error = &'static str;
 
 	fn try_from(
 		(reclamado, endereco): (&database::Reclamado, &database::Endereco),
 	) -> Result<Self, Self::Error> {
-		if reclamado.tipo_pessoa == database::TipoPessoa::Fisica
-			&& reclamado.cpf.is_none()
-		{
-			return Err("Reclamado pessoa física deve ter CPF");
-		}
-
-		if reclamado.tipo_pessoa == database::TipoPessoa::Juridica
-			&& reclamado.cnpj.is_none()
-		{
-			return Err("Reclamado pessoa jurídica deve ter CNPJ");
-		}
-
 		if reclamado.id_endereco.0 != endereco.id_endereco.0 {
 			return Err("Endereço não corresponde ao reclamado");
 		}
@@ -431,14 +470,27 @@ impl TryFrom<(&database::Reclamado, &database::Endereco)> for Reclamado {
 	}
 }
 
-impl PartialEq for Reclamado {
-	fn eq(&self, other: &Self) -> bool {
-		match (&self.cpf, &self.cnpj, &other.cpf, &other.cnpj) {
-			(Some(cpf1), _, Some(cpf2), _) => {
-				cpf1 == cpf2 && self.nome_fantasia == other.nome_fantasia
-			}
-			(_, Some(cnpj1), _, Some(cnpj2)) => cnpj1 == cnpj2,
-			_ => false,
+impl From<&database::ReclamadoExpanded> for Reclamado {
+	fn from(reclamado_expanded: &database::ReclamadoExpanded) -> Self {
+		Self {
+			tipo_pessoa: TipoPessoa::from(&reclamado_expanded.tipo_pessoa),
+			nome: reclamado_expanded.nome.clone().unwrap_or_default(),
+			razao_social: reclamado_expanded.razao_social.clone(),
+			nome_fantasia: reclamado_expanded.nome_fantasia.clone(),
+			cpf: reclamado_expanded.cpf.clone(),
+			cnpj: reclamado_expanded.cnpj.clone(),
+			email: reclamado_expanded.email.clone(),
+			num_telefone: reclamado_expanded.num_telefone.clone(),
+			endereco: Endereco {
+				cep: reclamado_expanded.endereco_cep.clone(),
+				logradouro: reclamado_expanded.endereco_logradouro.clone(),
+				numero: reclamado_expanded.endereco_numero.clone(),
+				complemento: reclamado_expanded.endereco_complemento.clone(),
+				bairro: reclamado_expanded.endereco_bairro.clone(),
+				cidade: reclamado_expanded.endereco_cidade.clone(),
+				estado: Uf::from(&reclamado_expanded.endereco_estado),
+				pais: reclamado_expanded.endereco_pais.clone(),
+			},
 		}
 	}
 }
@@ -448,6 +500,13 @@ pub struct Audiencia {
 	pub conciliador: Funcionario,
 	pub data_hora: DateTime<Utc>,
 	pub meio: MeioAudiencia,
+}
+
+impl PartialEq for Audiencia {
+	fn eq(&self, other: &Self) -> bool {
+		self.conciliador == other.conciliador
+			&& self.data_hora == other.data_hora
+	}
 }
 
 impl From<(&database::Audiencia, Funcionario)> for Audiencia {
@@ -512,16 +571,20 @@ pub struct Reclamacao {
 }
 
 impl Reclamacao {
+	pub fn has_any_audiencias(&self) -> bool {
+		!self.audiencias.is_empty()
+	}
+
+	pub fn has_any_reclamados(&self) -> bool {
+		!self.reclamados.is_empty()
+	}
+
 	pub fn audiencia_marcada_at(&self, data_hora: DateTime<Utc>) -> bool {
 		self.audiencias.iter().any(|a| a.data_hora == data_hora)
 	}
 
 	pub fn has_reclamado(&self, reclamado: &Reclamado) -> bool {
 		self.reclamados.iter().any(|r| r == reclamado)
-	}
-
-	pub fn protocolo_string(&self) -> String {
-		format!("{:04}-{}", self.protocolo.numero, self.protocolo.ano)
 	}
 }
 

@@ -89,6 +89,12 @@ pub struct Diretorio {
 	pub data_modificacao: DateTime<Utc>,
 }
 
+impl PartialEq for Diretorio {
+	fn eq(&self, other: &Self) -> bool {
+		self.id_diretorio == other.id_diretorio
+	}
+}
+
 #[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct EnderecoId(pub i32);
@@ -107,6 +113,12 @@ pub struct Endereco {
 	pub pais: String,
 	pub data_criacao: DateTime<Utc>,
 	pub data_modificacao: DateTime<Utc>,
+}
+
+impl PartialEq for Endereco {
+	fn eq(&self, other: &Self) -> bool {
+		self.id_endereco == other.id_endereco
+	}
 }
 
 #[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -181,6 +193,35 @@ impl PartialEq for Reclamante {
 	}
 }
 
+#[readonly::make]
+#[derive(sqlx::FromRow, Debug)]
+pub struct ReclamanteExpanded {
+	pub id_reclamante: ReclamanteId,
+	pub tipo_pessoa: TipoPessoa,
+	pub nome: String,
+	pub cpf: Option<String>,
+	pub cnpj: Option<String>,
+	pub id_endereco: EnderecoId,
+	pub endereco_logradouro: String,
+	pub endereco_numero: String,
+	pub endereco_complemento: Option<String>,
+	pub endereco_bairro: String,
+	pub endereco_cidade: String,
+	pub endereco_estado: Uf,
+	pub endereco_cep: String,
+	pub endereco_pais: String,
+	pub endereco_data_criacao: DateTime<Utc>,
+	pub endereco_data_modificacao: DateTime<Utc>,
+	pub data_criacao: DateTime<Utc>,
+	pub data_modificacao: DateTime<Utc>,
+}
+
+impl PartialEq for ReclamanteExpanded {
+	fn eq(&self, other: &Self) -> bool {
+		self.id_reclamante == other.id_reclamante
+	}
+}
+
 #[derive(sqlx::Type, Debug, PartialEq, Eq, Hash, Clone, Copy)]
 #[sqlx(transparent)]
 pub struct ReclamadoId(pub i32);
@@ -203,6 +244,39 @@ pub struct Reclamado {
 }
 
 impl PartialEq for Reclamado {
+	fn eq(&self, other: &Self) -> bool {
+		self.id_reclamado == other.id_reclamado
+	}
+}
+
+#[readonly::make]
+#[derive(sqlx::FromRow, Debug)]
+pub struct ReclamadoExpanded {
+	pub id_reclamado: ReclamadoId,
+	pub tipo_pessoa: TipoPessoa,
+	pub nome: Option<String>,
+	pub razao_social: Option<String>,
+	pub nome_fantasia: Option<String>,
+	pub cpf: Option<String>,
+	pub cnpj: Option<String>,
+	pub email: Option<String>,
+	pub num_telefone: Option<String>,
+	pub id_endereco: EnderecoId,
+	pub endereco_logradouro: String,
+	pub endereco_numero: String,
+	pub endereco_complemento: Option<String>,
+	pub endereco_bairro: String,
+	pub endereco_cidade: String,
+	pub endereco_estado: Uf,
+	pub endereco_cep: String,
+	pub endereco_pais: String,
+	pub endereco_data_criacao: DateTime<Utc>,
+	pub endereco_data_modificacao: DateTime<Utc>,
+	pub data_criacao: DateTime<Utc>,
+	pub data_modificacao: DateTime<Utc>,
+}
+
+impl PartialEq for ReclamadoExpanded {
 	fn eq(&self, other: &Self) -> bool {
 		self.id_reclamado == other.id_reclamado
 	}

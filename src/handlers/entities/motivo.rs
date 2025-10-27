@@ -26,11 +26,20 @@ pub async fn root() -> impl IntoResponse {
 			<li><strong>POST /motivo/create</strong> - Criar novo motivo (JSON body)</li>
 			<li><strong>GET /motivo/get?id={}</strong> - Obter motivo por ID</li>
 			<li><strong>GET /motivo/get?nome={}</strong> - Obter motivo por nome</li>
+			<li><strong>PUT /motivo/update?id={}</strong> - Atualizar motivo por ID (JSON body)</li>
+			<li><strong>DELETE /motivo/delete?id={}</strong> - Deletar motivo por ID</li>
+			<li><strong>DELETE /motivo/delete?nome={}</strong> - Deletar motivo por nome</li>
+			<li><strong>GET /motivo/count</strong> - Contar todos os motivos</li>
 		</ul>
 		<h2>Exemplos</h2>
 		<p><code>GET /motivo/list?page=1&per_page=10</code></p>
 		<p><code>POST /motivo/create</code> com JSON: <code>{"nome": "Motivo exemplo"}</code></p>
 		<p><code>GET /motivo/get?id=1</code></p>
+		<p><code>GET /motivo/get?nome=Motivo+exemplo</code></p>
+		<p><code>PUT /motivo/update?id=1</code> com JSON: <code>{"nome": "Motivo atualizado"}</code></p>
+		<p><code>DELETE /motivo/delete?id=1</code></p>
+		<p><code>DELETE /motivo/delete?nome=Motivo+exemplo</code></p>
+		<p><code>GET /motivo/count</code></p>
 		"#,
 	);
 
@@ -82,7 +91,7 @@ pub async fn create(
 	let resultado = match motivo::insert(&state.0.pg_pool, motivo).await {
 		Ok(motivo) => motivo,
 		Err(e) => {
-			err(&format!("Erro ao criar motivo: {}", e), Box::new(e));
+			err(&format!("Erro ao criar motivo"), Box::new(e));
 			return (StatusCode::INTERNAL_SERVER_ERROR, Json(None));
 		}
 	};
@@ -91,10 +100,12 @@ pub async fn create(
 }
 
 #[derive(Debug, Deserialize)]
-pub struct GetMotivoParams {
+pub struct MotivoParams {
 	id: Option<i32>,
 	nome: Option<String>,
 }
+
+type GetMotivoParams = MotivoParams;
 
 /// Handler GET /motivo/get?id={} ou GET /motivo/get?nome={}
 pub async fn get(
@@ -115,8 +126,78 @@ pub async fn get(
 	match resultado {
 		Ok(motivo) => (StatusCode::OK, Json(motivo)),
 		Err(e) => {
-			err(&format!("Erro ao obter motivo: {}", e), Box::new(e));
+			err(&format!("Erro ao obter motivo"), Box::new(e));
 			(StatusCode::INTERNAL_SERVER_ERROR, Json(None))
 		}
 	}
+}
+
+type UpdateMotivoParams = MotivoParams;
+
+/// Handler PUT /motivo/update?id={} ou PUT /motivo/update?nome={}
+pub async fn update(
+	state: State<GlobalState>,
+	Query(params): Query<UpdateMotivoParams>,
+) -> impl IntoResponse {
+	// Handler implementation goes here
+	(StatusCode::NOT_IMPLEMENTED, Json(None::<()>))
+}
+
+type DeleteMotivoParams = MotivoParams;
+
+/// Handler DELETE /motivo/delete?id={} ou DELETE /motivo/delete?nome={}
+pub async fn delete(
+	state: State<GlobalState>,
+	Query(params): Query<DeleteMotivoParams>,
+) -> impl IntoResponse {
+	#[cfg(debug_assertions)]
+	debug("Requisição para /motivo/delete");
+
+	match params {
+		DeleteMotivoParams {
+			id: Some(id),
+			nome: None,
+		} => match motivo::delete_by_id(&state.0.pg_pool, MotivoId(id)).await {
+			Ok(message) => (StatusCode::OK, Json(Some(message))),
+			Err(e) => {
+				err(
+					&format!("Erro ao deletar motivo por ID"),
+					Box::new(e),
+				);
+				(StatusCode::INTERNAL_SERVER_ERROR, Json(None))
+			}
+		},
+		DeleteMotivoParams {
+			nome: Some(nome),
+			id: None,
+		} => match motivo::delete_by_nome(&state.0.pg_pool, &nome).await {
+			Ok(_) => (
+				StatusCode::OK,
+				Json(Some(format!("Motivo '{}' deletado com sucesso.", nome))),
+			),
+			Err(e) => {
+				err(
+					&format!("Erro ao deletar motivo por nome"),
+					Box::new(e),
+				);
+				(StatusCode::INTERNAL_SERVER_ERROR, Json(None))
+			}
+		},
+		_ => (StatusCode::BAD_REQUEST, Json(None)),
+	}
+}
+
+pub async fn count(state: State<GlobalState>) -> impl IntoResponse {
+	#[cfg(debug_assertions)]
+	debug("Requisição para /motivo/count");
+
+	let resultado = match motivo::count_all(&state.0.pg_pool).await {
+		Ok(count) => count,
+		Err(e) => {
+			err(&format!("Erro ao contar motivos: {}", e), Box::new(e));
+			return (StatusCode::INTERNAL_SERVER_ERROR, Json(None));
+		}
+	};
+
+	(StatusCode::OK, Json(Some(resultado)))
 }

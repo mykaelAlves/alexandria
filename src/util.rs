@@ -18,21 +18,24 @@ where
 }
 
 pub fn capitalize_words(s: &str) -> String {
-	s.split_whitespace()
-		.map(|word| {
-			let mut chars = word.chars();
-			match chars.next() {
-				Some(first_char) => {
-					let first_upper = first_char.to_uppercase().to_string();
+	let mut result = String::with_capacity(s.len());
+	let mut capitalize_next = true;
 
-					let rest_lower = chars.as_str().to_lowercase();
-
-					format!("{}{}", first_upper, rest_lower)
-				}
-
-				None => String::new(),
+	for c in s.chars() {
+		if c.is_whitespace() {
+			capitalize_next = true;
+			result.push(c);
+		} else if capitalize_next {
+			for upper_c in c.to_uppercase() {
+				result.push(upper_c);
 			}
-		})
-		.collect::<Vec<String>>()
-		.join(" ")
+			capitalize_next = false;
+		} else {
+			for lower_c in c.to_lowercase() {
+				result.push(lower_c);
+			}
+		}
+	}
+
+	result
 }

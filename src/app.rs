@@ -6,7 +6,7 @@ use crate::response::{
 };
 use crate::{log::err, response::SERVER_RUNNING};
 use axum::Router;
-use axum::routing::{any, get};
+use axum::routing::{any, delete, get, post, put};
 use serde::Deserialize;
 use sqlx::postgres;
 use std::sync::atomic::AtomicBool;
@@ -36,13 +36,34 @@ impl ServerApp {
 		})
 	}
 
+	#[rustfmt::skip]
 	pub async fn run(&self) -> Result<(), Box<dyn Error>> {
 		let app: Router = axum::Router::new()
 			.route("/", any(handlers::root))
+
 			.route("/motivo", any(handlers::entities::motivo::root))
 			.route("/motivo/list", get(handlers::entities::motivo::list))
 			.route("/motivo/get", get(handlers::entities::motivo::get))
+			.route("/motivo/count", get(handlers::entities::motivo::count))
+			.route("/motivo/create", post(handlers::entities::motivo::create))
+			.route("/motivo/update", put(handlers::entities::motivo::update))
+			.route("/motivo/delete", delete(handlers::entities::motivo::delete))
+
+			.route("/reclamacao", any(handlers::entities::reclamacao::root))
+			.route("/reclamacao/create", post(handlers::entities::reclamacao::create))
+
+			.route("/reclamado", any(handlers::entities::reclamado::root))
+			.route("/reclamado/create", post(handlers::entities::reclamado::create))
+
+			.route("/reclamante", any(handlers::entities::reclamante::root))
+			.route("/reclamante/create", post(handlers::entities::reclamante::create))
+			.route("/reclamante/list", get(handlers::entities::reclamante::list))
+			.route("/reclamante/get", get(handlers::entities::reclamante::get))
+			.route("/reclamante/update", put(handlers::entities::reclamante::update))
+			.route("/reclamante/delete", delete(handlers::entities::reclamante::delete))
+
 			.with_state(self.state.clone());
+
 
 		let listener = match TcpListener::bind(self.config.network.ip).await {
 			Ok(l) => l,

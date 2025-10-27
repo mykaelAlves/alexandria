@@ -63,6 +63,12 @@ pub mod cargo {
 	pub const INSERT: &str = "INSERT INTO cargos (titulo) VALUES ($1) \
 	                          RETURNING id_cargo, titulo, data_criacao";
 
+	pub const UPDATE_BY_ID: &str =
+		"UPDATE cargos SET titulo = $1 WHERE id_cargo = $2";
+
+	pub const UPDATE_BY_TITULO: &str =
+		"UPDATE cargos SET titulo = $1 WHERE titulo = $2";
+
 	pub const DELETE_BY_ID: &str = "DELETE FROM cargos WHERE id_cargo = $1";
 }
 
@@ -109,18 +115,99 @@ pub mod diretorio {
 	                                     modificavel = $2 WHERE caminho = $3";
 }
 
-pub mod endereco {}
+pub mod endereco {
+	pub const COUNT_ALL: &str = "SELECT COUNT(*) FROM enderecos";
 
-pub mod funcionario {}
+	pub const GET_ALL: &str = "SELECT id_endereco, logradouro, numero, \
+	                           complemento, bairro, cidade, estado, cep FROM \
+	                           enderecos ORDER BY id_endereco";
 
-pub mod procurador {}
+	pub const GET_BY_ID: &str = "SELECT id_endereco, logradouro, numero, \
+	                             complemento, bairro, cidade, estado, cep \
+	                             FROM enderecos WHERE id_endereco = $1";
 
-pub mod reclamante {}
+	pub const GET_BY_ESTADO: &str = "SELECT id_endereco, logradouro, numero, \
+	                                 complemento, bairro, cidade, estado, cep \
+	                                 FROM enderecos WHERE estado = $1";
 
-pub mod reclamado {}
+	pub const GET_BY_CIDADE: &str = "SELECT id_endereco, logradouro, numero, \
+	                                 complemento, bairro, cidade, estado, cep \
+	                                 FROM enderecos WHERE cidade = $1";
 
-pub mod audiencia {}
+	pub const GET_BY_CEP: &str = "SELECT id_endereco, logradouro, numero, \
+	                              complemento, bairro, cidade, estado, cep \
+	                              FROM enderecos WHERE cep = $1";
 
-pub mod reclamacao {}
+	pub const GET_BY_BAIRRO: &str = "SELECT id_endereco, logradouro, numero, \
+	                                 complemento, bairro, cidade, estado, cep \
+	                                 FROM enderecos WHERE bairro = $1";
 
-pub mod historico {}
+	pub const INSERT: &str = "INSERT INTO enderecos (logradouro, numero, \
+	                          complemento, bairro, cidade, estado, cep) \
+	                          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING \
+	                          id_endereco, logradouro, numero, complemento, \
+	                          bairro, cidade, estado, cep";
+
+	pub const DELETE_BY_ID: &str =
+		"DELETE FROM enderecos WHERE id_endereco = $1";
+
+	pub const UPDATE_BY_ID: &str = "UPDATE enderecos SET logradouro = $1, \
+	                                numero = $2, complemento = $3, bairro = \
+	                                $4, cidade = $5, estado = $6, cep = $7 \
+	                                WHERE id_endereco = $8";
+}
+
+pub mod funcionario {
+	pub const COUNT_ALL: &str = "SELECT COUNT(*) FROM funcionarios";
+}
+
+pub mod procurador {
+	pub const COUNT_ALL: &str = "SELECT COUNT(*) FROM procuradores";
+}
+
+pub mod reclamante {
+	pub const COUNT_ALL: &str = "SELECT COUNT(*) FROM reclamantes";
+}
+
+pub mod reclamado {
+	pub const COUNT_ALL: &str = "SELECT COUNT(*) FROM reclamados";
+}
+
+pub mod audiencia {
+	pub const COUNT_ALL: &str = "SELECT COUNT(*) FROM audiencias";
+}
+
+pub mod reclamacao {
+	pub const COUNT_ALL: &str = "SELECT COUNT(*) FROM reclamacoes";
+}
+
+pub mod historico {
+	pub const COUNT_ALL: &str =
+		"SELECT COUNT(*) FROM historico_status_reclamacoes";
+
+	pub const GET_BY_RECLAMACAO_ID: &str =
+		"SELECT id_historico, id_reclamacao, id_status_anterior, \
+		 id_status_novo, data_modificacao FROM historico_status_reclamacoes \
+		 WHERE id_reclamacao = $1 ORDER BY data_modificacao DESC";
+
+	pub const GET_BY_ID: &str =
+		"SELECT id_historico, id_reclamacao, id_status_anterior, \
+		 id_status_novo, data_modificacao FROM historico_status_reclamacoes \
+		 WHERE id_historico = $1";
+
+	pub const GET_N: &str =
+		"SELECT id_historico, id_reclamacao, id_status_anterior, \
+		 id_status_novo, data_modificacao FROM historico_status_reclamacoes \
+		 ORDER BY data_modificacao DESC LIMIT $1";
+
+	pub const LIST: &str =
+		"SELECT id_historico, id_reclamacao, id_status_anterior, \
+		 id_status_novo, data_modificacao FROM historico_status_reclamacoes \
+		 ORDER BY data_modificacao DESC LIMIT $1 OFFSET $2";
+
+	pub const INSERT: &str =
+		"INSERT INTO historico_status_reclamacoes (id_reclamacao, \
+		 id_status_anterior, id_status_novo) VALUES ($1, $2, $3) RETURNING \
+		 id_historico, id_reclamacao, id_status_anterior, id_status_novo, \
+		 data_modificacao";
+}
