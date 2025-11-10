@@ -1,5 +1,21 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+CREATE OR REPLACE FUNCTION trigger_delete_relacao_reclamacao_reclamado()
+RETURNS TRIGGER AS $$
+BEGIN
+  DELETE FROM relacao_reclamacao_reclamado WHERE id_reclamacao = OLD.id_reclamacao;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION trigger_delete_relacao_reclamacao_audiencia()
+RETURNS TRIGGER AS $$
+BEGIN
+  DELETE FROM relacao_reclamacao_audiencia WHERE id_reclamacao = OLD.id_reclamacao;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION validar_cpf(cpf TEXT)
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -100,7 +116,7 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
-  NEW.data_modificacao = NOW();
+  NEW.updated_at = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -142,7 +158,7 @@ CREATE DOMAIN d_email AS VARCHAR(255)
 CREATE TABLE cargos (
   id_cargo INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   titulo VARCHAR(100) NOT NULL UNIQUE,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE motivos (
@@ -151,16 +167,18 @@ CREATE TABLE motivos (
   artigo SMALLINT NOT NULL,
   paragrafo_unico BOOLEAN NOT NULL,
   inciso SMALLINT NULL,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE diretorios (
   id_diretorio INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   caminho VARCHAR(255) NOT NULL UNIQUE,
   modificavel BOOLEAN NOT NULL DEFAULT TRUE,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE enderecos (
@@ -173,8 +191,9 @@ CREATE TABLE enderecos (
   cidade VARCHAR(100) NOT NULL,
   estado uf_enum NOT NULL,
   pais VARCHAR(50) NOT NULL DEFAULT 'Brasil',
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE funcionarios (
@@ -185,9 +204,9 @@ CREATE TABLE funcionarios (
   num_telefone VARCHAR(20) NULL,
   username VARCHAR(100) NOT NULL UNIQUE,
   pwd_hash VARCHAR(255) NOT NULL,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_desligamento TIMESTAMPTZ NULL
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE procuradores (
@@ -197,8 +216,9 @@ CREATE TABLE procuradores (
   id_endereco INT NOT NULL REFERENCES enderecos(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
   email d_email NULL,
   num_telefone VARCHAR(20) NULL,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE reclamantes (
@@ -208,8 +228,9 @@ CREATE TABLE reclamantes (
   cpf d_cpf NULL UNIQUE,
   cnpj d_cnpj NULL UNIQUE,
   id_endereco INT NOT NULL REFERENCES enderecos(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL,
   CONSTRAINT chk_reclamante_tipo_pessoa
     CHECK ((tipo_pessoa = 'Fisica' AND cpf IS NOT NULL AND cnpj IS NULL) OR
            (tipo_pessoa = 'Juridica' AND cnpj IS NOT NULL AND cpf IS NULL))
@@ -226,8 +247,9 @@ CREATE TABLE reclamados (
   email d_email NULL,
   num_telefone VARCHAR(20) NULL,
   id_endereco INT NOT NULL REFERENCES enderecos(id_endereco) ON DELETE RESTRICT ON UPDATE CASCADE,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL,
   CONSTRAINT chk_reclamado_tipo_pessoa
     CHECK ((tipo_pessoa = 'Fisica' AND cpf IS NOT NULL AND nome IS NOT NULL AND cnpj IS NULL AND razao_social IS NULL) OR
            (tipo_pessoa = 'Juridica' AND cnpj IS NOT NULL AND razao_social IS NOT NULL AND cpf IS NULL AND nome IS NULL))
@@ -238,8 +260,9 @@ CREATE TABLE audiencias (
   id_conciliador INT NOT NULL REFERENCES funcionarios(id_funcionario) ON DELETE RESTRICT ON UPDATE CASCADE,
   data_hora TIMESTAMPTZ NOT NULL,
   meio meio_audiencia_enum NOT NULL,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE reclamacoes (
@@ -255,8 +278,9 @@ CREATE TABLE reclamacoes (
   id_criador INT NOT NULL REFERENCES funcionarios(id_funcionario) ON DELETE RESTRICT ON UPDATE CASCADE,
   status status_reclamacao_enum NOT NULL,
   id_diretorio INT NOT NULL REFERENCES diretorios(id_diretorio) ON DELETE RESTRICT ON UPDATE CASCADE,
-  data_criacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  data_modificacao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL,
   UNIQUE (numero, ano)
 );
 
@@ -289,6 +313,9 @@ CREATE TRIGGER set_timestamp_reclamantes BEFORE UPDATE ON reclamantes FOR EACH R
 CREATE TRIGGER set_timestamp_reclamados BEFORE UPDATE ON reclamados FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 CREATE TRIGGER set_timestamp_audiencias BEFORE UPDATE ON audiencias FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 CREATE TRIGGER set_timestamp_reclamacoes BEFORE UPDATE ON reclamacoes FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER set_timestamp_motivos BEFORE UPDATE ON motivos FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+CREATE TRIGGER delete_after_update_reclamacoes BEFORE UPDATE ON reclamacoes FOR WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL) EXECUTE FUNCTION trigger_delete_relacao_reclamacao_reclamado();
+CREATE TRIGGER delete_after_update_reclamacoes_audiencia BEFORE UPDATE ON reclamacoes FOR WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL) EXECUTE FUNCTION trigger_delete_relacao_reclamacao_audiencia();
 CREATE TRIGGER registrar_mudanca_status AFTER UPDATE ON reclamacoes FOR EACH ROW WHEN (OLD.status IS DISTINCT FROM NEW.status) EXECUTE FUNCTION trigger_registrar_mudanca_status();
 
 
@@ -314,7 +341,7 @@ COMMENT ON DOMAIN d_cpf IS 'Domínio para armazenar CPF, garantindo que contenha
 COMMENT ON DOMAIN d_cnpj IS 'Domínio para armazenar CNPJ, garantindo que contenha 14 dígitos numéricos e que seja um número válido conforme o algoritmo do governo.';
 
 COMMENT ON COLUMN funcionarios.pwd_hash IS 'Hash da senha do funcionário. Gerado por um algoritmo seguro (ex: bcrypt via pgcrypto), o hash já contém o salt.';
-COMMENT ON FUNCTION trigger_set_timestamp IS 'Atualiza a coluna data_modificacao para a data e hora atuais sempre que uma linha é atualizada.';
+COMMENT ON FUNCTION trigger_set_timestamp IS 'Atualiza a coluna updated_at para a data e hora atuais sempre que uma linha é atualizada.';
 COMMENT ON FUNCTION trigger_registrar_mudanca_status IS 'Registra a mudança de status de uma reclamação na tabela de histórico.';
 COMMENT ON DOMAIN d_email IS 'Domínio para validar e armazenar endereços de e-mail.';
 COMMENT ON TABLE cargos IS 'Armazena os diferentes cargos que um funcionário pode ocupar.';
