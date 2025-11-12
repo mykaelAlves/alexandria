@@ -1,9 +1,17 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+CREATE OR REPLACE FUNCTION trigger_set_null_fk_procurador()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE FROM reclamacoes SET id_procurador = NULL WHERE id_procurador = OLD.id_procurador;
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION trigger_delete_relacao_reclamacao_reclamado()
 RETURNS TRIGGER AS $$
 BEGIN
-  DELETE FROM relacao_reclamacao_reclamado WHERE id_reclamacao = OLD.id_reclamacao;
+  UPDATE FROM relacao_reclamacao_reclamado SET deleted_at = NOW() WHERE id_reclamacao = OLD.id_reclamacao;
   RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
@@ -11,7 +19,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION trigger_delete_relacao_reclamacao_audiencia()
 RETURNS TRIGGER AS $$
 BEGIN
-  DELETE FROM relacao_reclamacao_audiencia WHERE id_reclamacao = OLD.id_reclamacao;
+  UPDATE FROM relacao_reclamacao_audiencia SET deleted_at = NOW() WHERE id_reclamacao = OLD.id_reclamacao;
   RETURN OLD;
 END;
 $$ LANGUAGE plpgsql;
@@ -124,10 +132,8 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION trigger_registrar_mudanca_status()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF OLD.status IS DISTINCT FROM NEW.status THEN
-    INSERT INTO historico_status_reclamacoes (id_reclamacao, status_anterior, status_novo)
-    VALUES (OLD.id_reclamacao, OLD.status, NEW.status);
-  END IF;
+  INSERT INTO historico_status_reclamacoes (id_reclamacao, status_anterior, status_novo)
+  VALUES (OLD.id_reclamacao, OLD.status, NEW.status);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -158,7 +164,8 @@ CREATE DOMAIN d_email AS VARCHAR(255)
 CREATE TABLE cargos (
   id_cargo INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   titulo VARCHAR(100) NOT NULL UNIQUE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ NULL
 );
 
 CREATE TABLE motivos (
@@ -295,12 +302,14 @@ CREATE TABLE historico_status_reclamacoes (
 CREATE TABLE relacao_reclamacao_reclamado (
   id_reclamacao INT NOT NULL REFERENCES reclamacoes(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
   id_reclamado INT NOT NULL REFERENCES reclamados(id_reclamado) ON DELETE CASCADE ON UPDATE CASCADE,
+  deleted_at TIMESTAMPTZ NULL,
   PRIMARY KEY (id_reclamacao, id_reclamado)
 );
 
 CREATE TABLE relacao_reclamacao_audiencia (
   id_reclamacao INT NOT NULL REFERENCES reclamacoes(id_reclamacao) ON DELETE CASCADE ON UPDATE CASCADE,
   id_audiencia INT NOT NULL REFERENCES audiencias(id_audiencia) ON DELETE CASCADE ON UPDATE CASCADE,
+  deleted_at TIMESTAMPTZ NULL,
   PRIMARY KEY (id_reclamacao, id_audiencia)
 );
 
@@ -317,6 +326,7 @@ CREATE TRIGGER set_timestamp_motivos BEFORE UPDATE ON motivos FOR EACH ROW EXECU
 CREATE TRIGGER delete_after_update_reclamacoes BEFORE UPDATE ON reclamacoes FOR WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL) EXECUTE FUNCTION trigger_delete_relacao_reclamacao_reclamado();
 CREATE TRIGGER delete_after_update_reclamacoes_audiencia BEFORE UPDATE ON reclamacoes FOR WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL) EXECUTE FUNCTION trigger_delete_relacao_reclamacao_audiencia();
 CREATE TRIGGER registrar_mudanca_status AFTER UPDATE ON reclamacoes FOR EACH ROW WHEN (OLD.status IS DISTINCT FROM NEW.status) EXECUTE FUNCTION trigger_registrar_mudanca_status();
+CREATE TRIGGER set_null_fk_procurador BEFORE UPDATE ON procuradores FOR EACH ROW WHEN (NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL) EXECUTE PROCEDURE trigger_set_null_fk_procurador();
 
 
 CREATE INDEX idx_funcionarios_id_cargo ON funcionarios(id_cargo);

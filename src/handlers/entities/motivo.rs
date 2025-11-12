@@ -160,10 +160,7 @@ pub async fn delete(
 		} => match motivo::delete_by_id(&state.0.pg_pool, MotivoId(id)).await {
 			Ok(message) => (StatusCode::OK, Json(Some(message))),
 			Err(e) => {
-				err(
-					&format!("Erro ao deletar motivo por ID"),
-					Box::new(e),
-				);
+				err(&format!("Erro ao deletar motivo por ID"), Box::new(e));
 				(StatusCode::INTERNAL_SERVER_ERROR, Json(None))
 			}
 		},
@@ -176,10 +173,7 @@ pub async fn delete(
 				Json(Some(format!("Motivo '{}' deletado com sucesso.", nome))),
 			),
 			Err(e) => {
-				err(
-					&format!("Erro ao deletar motivo por nome"),
-					Box::new(e),
-				);
+				err(&format!("Erro ao deletar motivo por nome"), Box::new(e));
 				(StatusCode::INTERNAL_SERVER_ERROR, Json(None))
 			}
 		},
