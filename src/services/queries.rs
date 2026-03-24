@@ -1239,3 +1239,37 @@ pub const __LIST_AUDIENCIAS_BY_RECLAMACAO_ID: &str = "SELECT a.id_audiencia, \
                                                       WHERE \
                                                       rel.id_reclamacao = \
                                                       $1;";
+
+// -----------------------------------------------------------------------------
+// --- ANALYTICS ---
+// (Consultas de BI e Relatórios)
+// -----------------------------------------------------------------------------
+
+// --------------------------
+// READ (Painel Geral)
+// --------------------------
+// CONSULTA 1: Contagem Total de Entidades (Visão Geral)
+// Descrição: 
+// Esta consulta fornece uma visão geral de alto nível do banco de dados, 
+// contando todos os registros ATIVOS (não deletados) em cada uma das 
+// principais tabelas. É excelente para um "snapshot" do sistema.
+pub const ANALYTICS_GET_TOTAL_ENTITY_COUNTS: &str = "SELECT (SELECT COUNT(*) \
+                                                     FROM reclamacoes WHERE \
+                                                     deleted_at IS NULL) AS \
+                                                     total_reclamacoes_ativas, \
+                                                     (SELECT COUNT(*) FROM \
+                                                     reclamantes WHERE \
+                                                     deleted_at IS NULL) AS \
+                                                     total_reclamantes_ativos, \
+                                                     (SELECT COUNT(*) FROM \
+                                                     reclamados WHERE \
+                                                     deleted_at IS NULL) AS \
+                                                     total_reclamados_ativos, \
+                                                     (SELECT COUNT(*) FROM \
+                                                     audiencias WHERE \
+                                                     deleted_at IS NULL) AS \
+                                                     total_audiencias_ativas, \
+                                                     (SELECT COUNT(*) FROM \
+                                                     funcionarios WHERE \
+                                                     deleted_at IS NULL) AS \
+                                                     total_funcionarios_ativos;";
