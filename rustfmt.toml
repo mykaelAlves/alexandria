@@ -1,0 +1,15 @@
+edition                             = "2024"
+max_width                           = 80
+newline_style                       = "Unix"
+wrap_comments                       = true
+imports_granularity                 = "Crate"
+group_imports                       = "StdExternalCrate"
+reorder_imports                     = true
+trailing_comma                      = "Vertical"
+match_block_trailing_comma          = true
+short_array_element_width_threshold = 20
+format_macro_matchers               = true
+format_strings                      = true
+normalize_comments                  = true
+normalize_doc_attributes            = true
+reorder_impl_items                  = true
