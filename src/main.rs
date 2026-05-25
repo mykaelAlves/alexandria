@@ -1,13 +1,8 @@
-use axum::{
-    Router,
-    http::{HeaderValue, Method, header},
-    routing::get,
-};
+use alexandria::api;
+use axum::{Router, routing::get};
 use tokio::net::TcpListener;
-use tower_http::{
-    trace::TraceLayer,
-};
-use tracing::{info, level_filters::LevelFilter, warn};
+use tower_http::trace::TraceLayer;
+use tracing::{error, info, level_filters::LevelFilter, warn};
 use tracing_subscriber::{
     EnvFilter, layer::SubscriberExt, util::SubscriberInitExt,
 };
@@ -27,29 +22,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Iniciando Alexandria...");
 
-    let app = Router::new()
-        .route("/ping", get(ping))
-        .layer(TraceLayer::new_for_http());
+    let app = api::create_router();
 
-    let listener = TcpListener::bind(SERVER_ADDR).await?;
+    let listener = TcpListener::bind(SERVER_ADDR).await.map_err(|e| {
+        error!("Falha ao vincular ao endereço {}: {}", SERVER_ADDR, e);
+        Box::<dyn std::error::Error>::from(e)
+    })?;
 
-    info!("Alexandria rodando em http://{}", SERVER_ADDR);
+    info!("Alexandria rodando em http://{}", listener.local_addr()?);
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
-        .await?;
+        .await
+        .map_err(|e| {
+            error!("Falha ao iniciar o servidor: {}", e);
+            Box::<dyn std::error::Error>::from(e)
+        })?;
 
     Ok(())
 }
 
 async fn shutdown_signal() {
-    tokio::signal::ctrl_c()
-        .await
-        .expect("Falha ao registrar sinal de shutdown (Ctrl+C)");
-
-    info!("Sinal de shutdown recebido. Encerrando Alexandria...");
-}
-
-async fn ping() -> &'static str {
-    "pong"
+    match tokio::signal::ctrl_c().await {
+        Ok(()) => info!("Sinal de shutdown recebido. Encerrando Alexandria..."),
+        Err(e) => warn!("Falha ao registrar sinal de shutdown: {}", e),
+    }
 }
