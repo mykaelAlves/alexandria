@@ -1,10 +1,8 @@
-use axum::{Router, routing::get};
+use axum::Router;
 use tower_http::trace::TraceLayer;
 
-use crate::api::health::ping;
-
-pub mod middleware;
 pub mod health;
+pub mod middleware;
 
 pub fn create_router() -> Router {
     axum::Router::new()

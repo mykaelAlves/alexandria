@@ -1,13 +1,12 @@
 use alexandria::api;
 use axum::{Router, routing::get};
+use config::Config;
 use tokio::net::TcpListener;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, level_filters::LevelFilter, warn};
 use tracing_subscriber::{
     EnvFilter, layer::SubscriberExt, util::SubscriberInitExt,
 };
-
-const SERVER_ADDR: &str = "127.0.0.1:8888";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -22,12 +21,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Iniciando Alexandria...");
 
+    let config = alexandria::config::AlexandriaConfig::new();
     let app = api::create_router();
 
-    let listener = TcpListener::bind(SERVER_ADDR).await.map_err(|e| {
-        error!("Falha ao vincular ao endereço {}: {}", SERVER_ADDR, e);
-        Box::<dyn std::error::Error>::from(e)
-    })?;
+    let listener =
+        TcpListener::bind(config.server_addr).await.map_err(|e| {
+            error!(
+                "Falha ao vincular ao endereço {}: {}",
+                config.server_addr, e
+            );
+            Box::<dyn std::error::Error>::from(e)
+        })?;
 
     info!("Alexandria rodando em http://{}", listener.local_addr()?);
 
