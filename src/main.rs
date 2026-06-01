@@ -1,12 +1,11 @@
 use alexandria::api;
-use axum::{Router, routing::get};
-use config::Config;
 use tokio::net::TcpListener;
-use tower_http::trace::TraceLayer;
-use tracing::{error, info, level_filters::LevelFilter, warn};
+use tracing::{debug, error, info, level_filters::LevelFilter, warn};
 use tracing_subscriber::{
     EnvFilter, layer::SubscriberExt, util::SubscriberInitExt,
 };
+
+use alexandria::config::AlexandriaConfig;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +20,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Iniciando Alexandria...");
 
-    let config = alexandria::config::AlexandriaConfig::new();
+    let config = match AlexandriaConfig::new() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Falha ao carregar configuração: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    debug!("Configuração carregada: {:#?}", config);
+
     let app = api::create_router();
 
     let listener =

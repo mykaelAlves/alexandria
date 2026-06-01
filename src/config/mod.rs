@@ -1,44 +1,30 @@
 use std::net::SocketAddrV4;
 
-use config::{Case, Config, Environment};
+use config::{Case, Config, ConfigError, Environment};
+use secrecy::SecretString;
 use serde::Deserialize;
-use tracing::{debug, error};
+use tracing::debug;
 
 #[derive(Debug, Deserialize)]
 pub struct AlexandriaConfig {
     pub server_addr: SocketAddrV4,
-    pub database_url: String,
-    pub secret_key: String,
+    pub database_url: SecretString,
+    pub secret_key: SecretString,
 }
 
 impl AlexandriaConfig {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, ConfigError> {
         dotenvy::dotenv().ok();
 
-        let config = match Config::builder()
+        let config = Config::builder()
             .add_source(
                 Environment::with_prefix("ALEXANDRIA")
                     .try_parsing(true)
                     .separator("__")
                     .convert_case(Case::Snake),
             )
-            .build()
-        {
-            Ok(c) => c,
-            Err(e) => {
-                error!("Falha ao carregar configuração: {}", e);
-                std::process::exit(1);
-            },
-        };
+            .build()?;
 
-        debug!("Configuração carregada: {:#?}", config);
-
-        match config.try_deserialize() {
-            Ok(c) => return c,
-            Err(e) => {
-                error!("Falha ao deserializar configuração: {}", e);
-                std::process::exit(1);
-            },
-        }
+        config.try_deserialize()
     }
 }
