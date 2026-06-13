@@ -1,11 +1,9 @@
-use alexandria::api;
+use alexandria::{api, config::AlexandriaConfig};
 use tokio::net::TcpListener;
 use tracing::{debug, error, info, level_filters::LevelFilter, warn};
 use tracing_subscriber::{
     EnvFilter, layer::SubscriberExt, util::SubscriberInitExt,
 };
-
-use alexandria::config::AlexandriaConfig;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -25,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => {
             error!("Falha ao carregar configuração: {}", e);
             std::process::exit(1);
-        }
+        },
     };
 
     debug!("Configuração carregada: {:#?}", config);

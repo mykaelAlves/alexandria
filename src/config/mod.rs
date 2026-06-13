@@ -3,7 +3,6 @@ use std::net::SocketAddrV4;
 use config::{Case, Config, ConfigError, Environment};
 use secrecy::SecretString;
 use serde::Deserialize;
-use tracing::debug;
 
 #[derive(Debug, Deserialize)]
 pub struct AlexandriaConfig {
